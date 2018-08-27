@@ -11,6 +11,8 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, scoped_session, sessionmaker
 
 
+Base = declarative_base()
+
 class MySession():
     """Sessão com BD.
 
@@ -18,10 +20,9 @@ class MySession():
     testes, passando o parâmetro test=True, um BD na memória
     """
 
-    def __init__(self, base, arquivo='avatar.db'):
+    def __init__(self, arquivo='avatar.db'):
         """Inicializa.
         Params:
-            base: driver de banco de dados
             arquivo: Nome do arquivo que contém a base. Passar None
             cria banco de dados na memória
         """
@@ -39,7 +40,7 @@ class MySession():
             self._session = Session()
         else:
             self._session = scoped_session(Session)
-            base.metadata.bind = self._engine
+            Base.metadata.bind = self._engine
 
     @property
     def session(self):
@@ -52,17 +53,6 @@ class MySession():
         return self._engine
 
 
-Base = declarative_base()
-
-association_table = Table('basesorigem_padroesrisco', Base.metadata,
-                          Column('left_id', Integer,
-                                 ForeignKey('basesorigem.id')),
-                          Column('right_id', Integer,
-                                 ForeignKey('padroesrisco.id'))
-                          )
-
-
-
 class FonteImagem(Base):
     """Recintos ou outro fornecedor de imagens de escaneamento."""
     __tablename__ = 'fontesimagem'
@@ -71,6 +61,11 @@ class FonteImagem(Base):
     caminho = Column(String(200), unique=True)
     pub_date = Column(DateTime)
     imagens = relationship('ConteinerEscaneado', back_populates='fonte')
+    agendamentos = relationship('Agendamento', back_populates='fonte')
+
+    def __init__(self, nome: str, caminho: str):
+        self.nome = nome
+        self.caminho = caminho
 
     def __str__(self):
         return self.nome
@@ -79,7 +74,7 @@ class FonteImagem(Base):
 class ConteinerEscaneado(Base):
     __tablename__ = 'conteineresescaneados'
     id = Column(Integer, primary_key=True)
-    fonte_id = Column(Integer)
+    fonte_id = Column(Integer, ForeignKey('fontesimagem.id'))
     fonte = relationship('FonteImagem', back_populates='imagens')
     numero = Column(String(11))
     pub_date = Column(DateTime) # 'Data do escaneamento retirada do arquivo XML')
@@ -89,6 +84,9 @@ class ConteinerEscaneado(Base):
     arqimagem = Column(String(50))
     exportado = Column(Integer)
 
+    def __init__(self, numero: str, fonte: FonteImagem):
+        self.numero = numero
+        self.fonte = fonte
     """
     def getTotal(self):
         return ConteinerEscaneado.objects.count()
@@ -100,12 +98,17 @@ class ConteinerEscaneado(Base):
 class Agendamento(Base):
     __tablename__ = 'agendamentos'
     id = Column(Integer, primary_key=True)
-    fonte_id = Column(Integer)
-    fonte = relationship('FonteImagem', back_populates='imagens')
+    fonte_id = Column(Integer, ForeignKey('fontesimagem.id'))
+    fonte = relationship('FonteImagem', back_populates='agendamentos')
     mascarafiltro = Column(String(20))
     # 'Mascara no formato " % Y % m % d" mais qualquer literal', max_length=20)
     diaspararepetir = Column(Integer)
     proximocarregamento = Column(DateTime) #'Data do próximo agendamento')
+
+
+    def __init__(self, mascarafiltro: str, fonte: FonteImagem):
+        self.mascarafiltro = mascarafiltro
+        self.fonte = fonte
 
     def processamascara(self):
         return self.proximocarregamento.strftime(self.mascarafiltro)
