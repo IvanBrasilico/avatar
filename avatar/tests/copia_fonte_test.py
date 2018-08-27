@@ -13,7 +13,6 @@ class ModelTest(unittest.TestCase):
         mysession = MySession(arquivo=None)
         self.session = mysession.session
         self.engine = mysession.engine
-        Base.metadata.create_all(self.engine)
 
     def tearDown(self):
         pass

@@ -29,8 +29,7 @@ class MySession():
         if arquivo is None:
             path = ':memory:'
         else:
-            path = os.path.join(os.path.dirname(
-                os.path.abspath(__file__)), arquivo)
+            path = os.path.join('.', arquivo)
             print('***Banco de Dados...', path)
             if os.name != 'nt':
                 path = '/' + path
@@ -38,9 +37,12 @@ class MySession():
         Session = sessionmaker(bind=self._engine)
         if arquivo is None:
             self._session = Session()
+            Base.metadata.create_all(self.engine)
         else:
             self._session = scoped_session(Session)
             Base.metadata.bind = self._engine
+            if not os.path.exists(arquivo):
+                Base.metadata.create_all(self._engine)
 
     @property
     def session(self):
@@ -68,7 +70,7 @@ class FonteImagem(Base):
         self.caminho = caminho
 
     def __str__(self):
-        return self.nome
+        return f'{self.nome}, {self.caminho}'
 
 
 class ConteinerEscaneado(Base):
