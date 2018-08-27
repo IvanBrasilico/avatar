@@ -17,6 +17,16 @@ class FonteTest(unittest.TestCase):
         pass
 
 
+class CopiaFonteTest(unittest.TestCase):
+
+    def setUp(self):
+        pass
+
+    def tearDown(self):
+        pass
+
+    def test_copia(self):
+        pass
 
 
 if __name__ == '__main__':

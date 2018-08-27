@@ -79,57 +79,41 @@ class FonteImagem(Base):
 class ConteinerEscaneado(Base):
     __tablename__ = 'fontesimagem'
     id = Column(Integer, primary_key=True)
-    fonte = models.ForeignKey(FonteImagem, on_delete=models.CASCADE)
+    fonte_id = Column(Integer)
+    fonte = relationship('FonteImagem', back_populates='imagens')
     numero = Column(String(11))
-    pub_date = Column(DateTime, 
-        'Data do escaneamento retirada do arquivo XML')
-    file_mdate = models.DateTimeField('Data da última modificação do arquivo')
-    file_cdate = models.DateTimeField('Data da criação do arquivo (Windows)')
-    arqimagemoriginal = models.CharField(max_length=50, blank=True)
-    arqimagem = models.CharField(max_length=50, blank=True)
-    truckid = models.CharField(max_length=50, blank=True)
-    codigoplano = models.BinaryField(max_length=1000, null=True)
-    exportado = models.IntegerField(default=0)
-    alerta = models.BooleanField(default=False)
-    operador = models.CharField(max_length=50, blank=True)
+    pub_date = Column(DateTime) # 'Data do escaneamento retirada do arquivo XML')
+    file_mdate = Column(DateTime) #'Data da última modificação do arquivo')
+    file_cdate = Column(DateTime) #'Data da criação do arquivo (Windows)')
+    arqimagemoriginal = Column(String(50), blank=True)
+    arqimagem = Column(String(50), blank=True)
+    exportado = Column(Integer)
 
-    class Meta:
-        indexes = [
-            models.Index(fields=['numero']),
-            models.Index(fields=['pub_date']),
-            models.Index(fields=['truckid']),
-        ]
-        unique_together = ('numero', 'pub_date')
-
-    def __str__(self):
-        return self.numero
-
-    def getTotal():
+    """
+    def getTotal(self):
         return ConteinerEscaneado.objects.count()
 
-    def getTotalporFonteImagem():
+    def getTotalporFonteImagem(self):
         return ConteinerEscaneado.objects.values('fonte').annotate(fcount=models.Count('fonte'))
+    """
 
-
-class Agendamento(models.Model):
-    fonte = models.ForeignKey(FonteImagem, on_delete=models.CASCADE)
-    mascarafiltro = models.CharField(
-        'Mascara no formato " % Y % m % d" mais qualquer literal', max_length=20)
-    diaspararepetir = models.IntegerField()
-    proximocarregamento = models.DateTimeField('Data do próximo agendamento')
-
-    class Meta:
-        indexes = [
-            models.Index(fields=['proximocarregamento']),
-        ]
+class Agendamento(Base):
+    __tablename__ = 'agendamentos'
+    id = Column(Integer, primary_key=True)
+    fonte_id = Column(Integer)
+    fonte = relationship('FonteImagem', back_populates='imagens')
+    mascarafiltro = Column(String(20))
+    # 'Mascara no formato " % Y % m % d" mais qualquer literal', max_length=20)
+    diaspararepetir = Column(Integer)
+    proximocarregamento = Column(DateTime) #'Data do próximo agendamento')
 
     def processamascara(self):
         return self.proximocarregamento.strftime(self.mascarafiltro)
 
-    def agendamentos_pendentes():
+    def agendamentos_pendentes(self):
         return Agendamento.objects.all().filter(proximocarregamento__lt=datetime.datetime.now())
 
-    def agendamentos_programados():
+    def agendamentos_programados(self):
         return Agendamento.objects.all().filter(proximocarregamento__gt=datetime.datetime.now())
 
     def __str__(self):
