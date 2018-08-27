@@ -77,7 +77,7 @@ class FonteImagem(Base):
 
 
 class ConteinerEscaneado(Base):
-    __tablename__ = 'fontesimagem'
+    __tablename__ = 'conteineresescaneados'
     id = Column(Integer, primary_key=True)
     fonte_id = Column(Integer)
     fonte = relationship('FonteImagem', back_populates='imagens')
@@ -85,8 +85,8 @@ class ConteinerEscaneado(Base):
     pub_date = Column(DateTime) # 'Data do escaneamento retirada do arquivo XML')
     file_mdate = Column(DateTime) #'Data da última modificação do arquivo')
     file_cdate = Column(DateTime) #'Data da criação do arquivo (Windows)')
-    arqimagemoriginal = Column(String(50), blank=True)
-    arqimagem = Column(String(50), blank=True)
+    arqimagemoriginal = Column(String(50))
+    arqimagem = Column(String(50))
     exportado = Column(Integer)
 
     """
