@@ -26,7 +26,12 @@ def cli(ctx, debug):
                    'às imagens (Unidade de disco e pasta)')
 @click.pass_obj
 def add(ctx, nome, caminho):
-    """Script de linha de comando para adicionar fonte de imagem."""
+    """Adiciona fonte de imagem.
+        Params:
+            nome - Nome da Fonte
+            caminho - Caminho Local para acesso às imagens
+             (Unidade de disco e pasta)
+    """
     fonte = session.query(FonteImagem).filter(FonteImagem.nome == nome).first()
     if fonte is None:
         fonte = FonteImagem(nome, caminho)
@@ -44,6 +49,7 @@ def add(ctx, nome, caminho):
 @cli.command()
 @click.pass_obj
 def lista(ctx):
+    """Lista fontes de imagem cadastradas."""
     fontes = session.query(FonteImagem).all()
     for fonte in fontes:
         print(fonte)
@@ -53,6 +59,10 @@ def lista(ctx):
 @click.option('--nome', prompt=True, help='Nome da fonte de imagens (Recinto)')
 @click.pass_obj
 def remove(ctx, nome):
+    """Remove fonte de imagem.
+        Params:
+            nome - Nome da Fonte
+    """
     print(session.query(FonteImagem).filter(FonteImagem.nome == nome).delete())
     session.commit()
     print(f'FonteImagem {nome} excluída')
@@ -63,6 +73,11 @@ def remove(ctx, nome):
 @click.option('--data', prompt=True, help='Data a copiar')
 @click.pass_obj
 def copia(ctx, nome, data):
+    """Copia imagens se disponíveis.
+        Params:
+            nome - Nome da Fonte
+            data - Dia a copiar imagens
+    """
     print(f'Iniciando cópia de arquivos da Fonte de Imagens {nome}'
           f' a partir de {data}')
 
