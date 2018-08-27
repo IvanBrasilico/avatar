@@ -11,6 +11,7 @@ setup(
     packages=find_packages(),
     install_requires=[
         'click',
+        'pillow',
         'sqlalchemy'
     ],
     dependency_links=[
@@ -24,6 +25,7 @@ setup(
     extras_require={
         'dev': [
             'alembic',
+            'autopep8',
             'bandit',
             'coverage',
             'flake8',
@@ -31,7 +33,6 @@ setup(
             'flake8-quotes',
             'flake8-todo',
             'isort',
-            'autopep8',
             'pylint',
             'pytest',
             'pytest-cov',

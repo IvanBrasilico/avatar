@@ -8,6 +8,7 @@ Args:
 """
 import click
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm.exc import NoResultFound
 from avatar.cli import session
 from avatar.models.models import FonteImagem
 
@@ -78,8 +79,14 @@ def copia(ctx, nome, data):
             nome - Nome da Fonte
             data - Dia a copiar imagens
     """
-    print(f'Iniciando cópia de arquivos da Fonte de Imagens {nome}'
-          f' a partir de {data}')
+    try:
+        fonte = session.query(FonteImagem).filter(
+            FonteImagem.nome == nome).one()
+        print(f'Iniciando cópia de arquivos da Fonte de Imagens {nome}'
+              f' a partir de {data}')
+        
+    except NoResultFound as err:
+        print(f'Fonte "{nome}" não encontrada')
 
 
 if __name__ == '__main__':
