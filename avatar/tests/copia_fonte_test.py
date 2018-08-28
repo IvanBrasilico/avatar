@@ -3,8 +3,9 @@
 # PARA permitir a cópia periódica dos arquivos de imagens
 
 import unittest
-from avatar.models.models import Agendamento, Base, \
-    ConteinerEscaneado, FonteImagem, MySession
+
+from avatar.models.models import (Agendamento, Base, ConteinerEscaneado,
+                                  FonteImagem, MySession)
 
 
 class ModelTest(unittest.TestCase):

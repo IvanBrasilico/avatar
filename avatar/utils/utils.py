@@ -1,79 +1,106 @@
 import datetime
-from avatar.models.models import Agendamento
-
-from ajna_commons import BsonImage, BsonImageList
-from .views import homedir, size
-from PIL import Image
-import os
-import glob
-# from scipy import misc
-import xml.etree.ElementTree as ET
 import fnmatch
-from shutil import copyfile
+import glob
+import os
 import time
+import xml.etree.ElementTree as ET
 from datetime import datetime
+from shutil import copyfile
+from sqlalchemy.exc import IntegrityError
+
+from avatar.models.models import Agendamento, ConteinerEscaneado, FonteImagem
+from avatar.utils.bsonimage import BsonImage, BsonImageList
+from avatar.utils.logconf import logger
+
+# size = (256, 120)
+HOMEDIR = os.path.dirname(os.path.abspath(__file__))
+UNIDADE_CONF = os.path.join(HOMEDIR, 'unidade.txt')
+BSON_BATCH_SIZE = 1000
+BSON_DEST_PATH = os.path.join(HOMEDIR, 'bson')
+try:
+    with open(UNIDADE_CONF, 'r') as unidade_file:
+        UNIDADE = unidade_file.readline()
+except FileNotFoundError:
+    UNIDADE = 'ALFSTS'
+    logger.warning('Arquivo de configuração não encontrado.'
+                   'Usando Unidade "ALFSTS".')
+    logger.warning('Crie arquivo unidade.txt para configurar')
 
 
-def carregaarquivos(homedir, caminho, size, fonteimagem):
-    path = os.path.join(fonteimagem.caminho, caminho)
-    pathdest = os.path.join(homedir, 'static', 'busca')
-    print('path', path)
+def carregaarquivos(caminho: str, fonteimagem: FonteImagem):
+    """Copia arquivos do caminho na Fonte.
+
+    (LAÇO) Verifica se há arquivos XML no sub-diretório da FonteImagem.
+        CASO existam, copia um a um para o diretório destino padrão (local).
+        (SE) ANTES de copiar XML, lê número do contêiner do XML tenta criar
+            diretório Ano/Mes/Dia/Numero. Caso já exista, considera cópia
+            feita, grava mensagem no log e parte para o próximo XML da lista.
+        (SENÃO) Não existindo o diretório destino,
+            CRIA diretório
+            COPIA XML
+            COPIA arquivo com final 'mp.jpg' do mesmo diretório do XML
+            CRIA registro para ConteinerEscaneado relativo a esta cópia
+
+    Params:
+        caminho: sub-diretório a copiar
+        fonteimagem: FonteImagem
+    :return: mensagem: str, erro: bool
+    """
+    path_origem = os.path.join(fonteimagem.caminho, caminho)
+    path_destino = os.path.join(HOMEDIR, 'images')
+    print(f'Origem: {path_origem}')
     numero = None
     mensagem = ''
     erro = False
     alerta = False
-    from .models import ConteinerEscaneado
     try:
-        for result in glob.iglob(path):
+        for result in glob.iglob(path_origem):
             for dirpath, dirnames, files in os.walk(result):
                 for f in fnmatch.filter(files, '*.xml'):
-                    print('carregaarquivos - f', f)
-                    print('carregaarquivos - dir path', dirpath)
+                    logger.debug(f'carregaarquivos - f{f}')
+                    logger.debug(f'carregaarquivos - dir path{dirpath}')
                     tree = ET.parse(os.path.join(dirpath, f))
                     root = tree.getroot()
                     for tag in root.iter('ContainerId'):
                         lnumero = tag.text
                         if lnumero is not None:
-                            print("Numero")
-                            print(lnumero)
+                            logger.debug(f'carregaarquivos - numero-{lnumero}')
                             numero = lnumero.replace('?', 'X')
                     for tag in root.iter('TruckId'):
-                        truckid=tag.text
+                        truckid = tag.text
                     for tag in root.iter('Date'):
-                        data=tag.text
+                        data = tag.text
                     for tag in root.iter('Login'):
-                        operador=tag.text
+                        operador = tag.text
                     for tag in root:
                         for t in tag.getchildren():
                             if t.text == 'AL':
                                 alerta = True
                     if numero is not None:
-                        print('Processando...')
+                        logger.debug('Processando...')
                         ano = data[:4]
                         mes = data[5:7]
                         dia = data[8:10]
                         destparcial = os.path.join(ano, mes, dia, numero)
-                        destcompleto = os.path.join(pathdest, destparcial)
-                        print('destcompleto', destcompleto)
-                        print('destparcial', destparcial)
+                        destcompleto = os.path.join(path_destino, destparcial)
+                        logger.debug(f'destcompleto {destcompleto}')
+                        logger.debug(f'destparcial {destparcial}')
                         try:
                             os.makedirs(destcompleto)
                         except FileExistsError as e:
                             erro = True
                             mensagem = mensagem + \
-                            destcompleto + ' já existente.\n'
-                            print(destcompleto, 'já existente')
+                                       destcompleto + ' já existente.\n'
+                            logger.debug(f'{destcompleto} já existente')
                             continue
                         copyfile(os.path.join(dirpath, f), os.path.join(destcompleto, f))
-                        for file in glob.glob(os.path.join(dirpath,'*mp.jpg')):
+                        for file in glob.glob(os.path.join(dirpath, '*mp.jpg')):
                             name = os.path.basename(file)
                             print(name)
                             copyfile(file, os.path.join(destcompleto, name))
-                            # recortaesalva(file, size, os.path.join(destcompleto, numero+'.jpg'))
                             c = ConteinerEscaneado()
                             c.numero = numero
-                            # c.arqimagem = destparcial+'/'+numero+'.jpg'
-                            c.arqimagemoriginal = destparcial+'/'+name
+                            c.arqimagemoriginal = destparcial + '/' + name
                             c.fonte = fonteimagem
                             c.pub_date = data
                             mdate = time.localtime(os.path.getmtime(file))
@@ -81,27 +108,27 @@ def carregaarquivos(homedir, caminho, size, fonteimagem):
                             cdate = time.localtime(os.path.getctime(file))
                             cdate = time.strftime('%Y-%m-%d %H:%M:%S%z', cdate)
                             c.file_mdate = mdate
-                            c.file_cdate = cdate #time.localtime(os.path.getctime(file)).strftime('%Y-%m-%d %H:%M:%S')
-                            print(c.pub_date, c.file_mdate, c.file_cdate)
+                            c.file_cdate = cdate
+                            logger.debug(f'{c.pub_date}, {c.file_mdate}, {c.file_cdate}')
                             c.truckid = truckid
                             c.alerta = alerta
                             c.operador = operador
                             c.exportado = 0
                             try:
                                 c.save()
-                                # mensagem = mensagem + numero + " incluído"
-                            except IntegrityError as e:
+                            except IntegrityError:
                                 erro = True
-                                mensagem = mensagem + path + numero + ' já cadastrado?!\n'
+                                mensagem = mensagem + destparcial + numero + ' já cadastrado?!\n'
                         numero = None
         else:
-            mensagem = mensagem + path + ' retornou lista vazia!! Sem acesso? \n'
+            mensagem = mensagem + path_origem + ' retornou lista vazia!! Sem acesso? \n'
             erro = True
     except Exception as err:
-        raise(err)
+        raise (err)
         erro = True
         mensagem = str(err)
     return mensagem, erro
+
 
 def trata_agendamentos():
     lista_agendamentos = Agendamento.agendamentos_pendentes()
@@ -111,15 +138,16 @@ def trata_agendamentos():
             for ag in lista_agendamentos:
                 fonte = ag.fonte
                 caminho = ag.processamascara()
-                mensagem, erro = carregaarquivos(homedir, caminho, size, fonte)
-                f.write(mensagem+'\n')
+                mensagem, erro = carregaarquivos(caminho, fonte)
+                f.write(mensagem + '\n')
                 if not erro:
                     ag.proximocarregamento = ag.proximocarregamento + \
-                        datetime.timedelta(days=ag.diaspararepetir)
+                                             datetime.timedelta(days=ag.diaspararepetir)
                     ag.save()
             f.close()
     else:
         print('Não tem agendamentos!')
+
 
 def exporta_bson(batch_size=BATCH_SIZE):
     if not batch_size:
@@ -128,7 +156,7 @@ def exporta_bson(batch_size=BATCH_SIZE):
     nao_exportados = ConteinerEscaneado.objects.all().filter(
         exportado=0)[:batch_size]
     qtde = len(nao_exportados)
-    if batch_size > qtde: #  Não tem arquivos suficientes ainda
+    if batch_size > qtde:  # Não tem arquivos suficientes ainda
         return {}, '', qtde
     dict_export = {}
     start = nao_exportados[0].pub_date
@@ -165,7 +193,7 @@ def exporta_bson(batch_size=BATCH_SIZE):
                 bsonimage = BsonImage(filename=jpegfile, **value)
                 bsonimagelist.addBsonImage(bsonimage)
             except FileNotFoundError as err:
-                f.write(str(err)+'\n')
+                f.write(str(err) + '\n')
                 print(str(err))
                 print(value['imagem'])
 
@@ -176,12 +204,12 @@ def exporta_bson(batch_size=BATCH_SIZE):
                 bsonimage = BsonImage(filename=xmlfile, **value)
                 bsonimagelist.addBsonImage(bsonimage)
             except FileNotFoundError as err:
-                f.write(str(err)+'\n')
+                f.write(str(err) + '\n')
                 print(str(err))
                 print(value['imagem'])
         f.close()
     name = datetime.datetime.strftime(start, '%Y-%m-%d_%H-%M-%S') + '_' + \
-        datetime.datetime.strftime(end, '%Y-%m-%d_%H-%M-%S')
+           datetime.datetime.strftime(end, '%Y-%m-%d_%H-%M-%S')
     s3 = time.time()
     print('Bson montado em ', s3 - s2, ' segundos')
     for containerescaneado in nao_exportados:

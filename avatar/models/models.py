@@ -1,5 +1,5 @@
-import os
 import datetime
+import os
 import time
 # from .filefunctions import carregaarquivos
 # from .bsonimage import BsonImage, BsonImageList
@@ -9,7 +9,6 @@ from sqlalchemy import (Column, DateTime, ForeignKey, Integer, String, Table,
                         create_engine)
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, scoped_session, sessionmaker
-
 
 Base = declarative_base()
 
@@ -83,7 +82,6 @@ class ConteinerEscaneado(Base):
     file_mdate = Column(DateTime) #'Data da última modificação do arquivo')
     file_cdate = Column(DateTime) #'Data da criação do arquivo (Windows)')
     arqimagemoriginal = Column(String(50))
-    arqimagem = Column(String(50))
     exportado = Column(Integer)
 
     def __init__(self, numero: str, fonte: FonteImagem):

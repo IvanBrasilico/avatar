@@ -9,6 +9,7 @@ Args:
 import click
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm.exc import NoResultFound
+
 from avatar.cli import session
 from avatar.models.models import FonteImagem
 
