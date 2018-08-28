@@ -8,7 +8,8 @@ logging.basicConfig(level=logging.INFO,
                     filemode='w')
 
 console = logging.StreamHandler()
-DEBUG = os.environ('DEBUG')
+# DEBUG = os.environ('DEBUG')
+DEBUG = False
 if DEBUG:
     console.setLevel(logging.WARNING)
 else:

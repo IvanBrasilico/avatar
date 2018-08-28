@@ -149,9 +149,7 @@ def trata_agendamentos():
         print('Não tem agendamentos!')
 
 
-def exporta_bson(batch_size=BATCH_SIZE):
-    if not batch_size:
-        batch_size = BATCH_SIZE
+def exporta_bson(batch_size=BSON_BATCH_SIZE):
     s0 = time.time()
     nao_exportados = ConteinerEscaneado.objects.all().filter(
         exportado=0)[:batch_size]

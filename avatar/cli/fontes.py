@@ -13,6 +13,8 @@ from sqlalchemy.orm.exc import NoResultFound
 from avatar.cli import session
 from avatar.models.models import FonteImagem
 from avatar.utils.utils import carregaarquivos
+from avatar.utils.logconf import console
+from logging import DEBUG
 
 
 @click.group()
@@ -20,6 +22,8 @@ from avatar.utils.utils import carregaarquivos
 @click.pass_context
 def cli(ctx, debug):
     ctx.obj = debug
+    if debug:
+        console.setLevel(DEBUG)
 
 
 @cli.command()
@@ -89,6 +93,18 @@ def copia(ctx, nome, data):
         carregaarquivos('images', fonte)
     except NoResultFound as err:
         print(f'Fonte "{nome}" não encontrada')
+
+
+@cli.command()
+@click.pass_obj
+def daemon(ctx):
+    pass
+
+
+@cli.command()
+@click.pass_obj
+def daemon(ctx):
+    pass
 
 
 if __name__ == '__main__':
