@@ -12,6 +12,7 @@ from sqlalchemy.orm.exc import NoResultFound
 
 from avatar.cli import session
 from avatar.models.models import FonteImagem
+from avatar.utils.utils import carregaarquivos
 
 
 @click.group()
@@ -85,7 +86,7 @@ def copia(ctx, nome, data):
             FonteImagem.nome == nome).one()
         print(f'Iniciando cópia de arquivos da Fonte de Imagens {nome}'
               f' a partir de {data}')
-        
+        carregaarquivos('images', fonte)
     except NoResultFound as err:
         print(f'Fonte "{nome}" não encontrada')
 
