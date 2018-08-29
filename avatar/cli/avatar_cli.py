@@ -100,7 +100,6 @@ def copia(ctx, nome, data):
         fonte = session.query(FonteImagem).filter(
             FonteImagem.nome == nome).one()
         agendamento = Agendamento('%Y\%m\%d', fonte)
-        print(datetime.now().strftime('%Y-%m-%d'))
         agendamento.proximocarregamento = datetime.strptime(data, '%Y-%m-%d')
         ###
         print(f'Iniciando cópia de arquivos da Fonte de Imagens {nome}'
