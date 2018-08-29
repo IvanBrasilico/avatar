@@ -13,7 +13,7 @@ from avatar.utils.bsonimage import BsonImage, BsonImageList
 from avatar.utils.logconf import logger
 
 # size = (256, 120)
-HOMEDIR = os.path.dirname(os.path.abspath(__file__))
+HOMEDIR = os.getcwd()
 UNIDADE_CONF = os.path.join(HOMEDIR, 'unidade.txt')
 BSON_BATCH_SIZE = 1000
 BSON_DEST_PATH = os.path.join(HOMEDIR, 'bson')
@@ -22,12 +22,13 @@ try:
         UNIDADE = unidade_file.readline()
 except FileNotFoundError:
     UNIDADE = 'ALFSTS'
+    logger.warning(f'HOMEDIR: {HOMEDIR}')
     logger.warning('Arquivo de configuração não encontrado. '
                    'Usando Unidade "ALFSTS".')
     logger.warning('Crie arquivo unidade.txt para configurar')
 
 
-def carregaarquivos(caminho: str, fonteimagem: FonteImagem):
+def carregaarquivos(caminho: str, fonteimagem: FonteImagem, session):
     """Copia arquivos do caminho na Fonte.
 
     (LAÇO) Verifica se há arquivos XML no sub-diretório da FonteImagem.
@@ -54,11 +55,18 @@ def carregaarquivos(caminho: str, fonteimagem: FonteImagem):
     erro = False
     alerta = False
     try:
+        lista_dir = [dir for dir in os.listdir(path_origem)
+                     if os.path.isdir(dir)]
+        print(lista_dir)
+        if len(lista_dir) == 0:
+            mensagem = mensagem + path_origem + \
+                       ' retornou lista vazia!! Sem acesso? \n'
+            return mensagem, True
         for result in glob.iglob(path_origem):
             for dirpath, dirnames, files in os.walk(result):
                 for f in fnmatch.filter(files, '*.xml'):
-                    logger.debug(f'carregaarquivos - f{f}')
-                    logger.debug(f'carregaarquivos - dir path{dirpath}')
+                    logger.debug(f'carregaarquivos - f = {f}')
+                    logger.debug(f'carregaarquivos - dir path = {dirpath}')
                     tree = ET.parse(os.path.join(dirpath, f))
                     root = tree.getroot()
                     for tag in root.iter('ContainerId'):
@@ -77,36 +85,31 @@ def carregaarquivos(caminho: str, fonteimagem: FonteImagem):
                             if t.text == 'AL':
                                 alerta = True
                     if numero is not None:
-                        logger.debug('Processando...')
                         ano = data[:4]
                         mes = data[5:7]
                         dia = data[8:10]
                         destparcial = os.path.join(ano, mes, dia, numero)
                         destcompleto = os.path.join(path_destino, destparcial)
                         logger.debug(f'destcompleto {destcompleto}')
-                        logger.debug(f'destparcial {destparcial}')
                         try:
                             os.makedirs(destcompleto)
                         except FileExistsError as e:
                             erro = True
                             mensagem = mensagem + \
-                                       destcompleto + ' já existente.\n'
-                            logger.debug(f'{destcompleto} já existente')
+                                       destcompleto + ' já existente. - pulando\n'
                             continue
                         copyfile(os.path.join(dirpath, f), os.path.join(destcompleto, f))
                         for file in glob.glob(os.path.join(dirpath, '*mp.jpg')):
                             name = os.path.basename(file)
-                            logger.debug(f'Copiango imagem {name}')
+                            logger.debug(f'Copiando imagem {name}')
                             copyfile(file, os.path.join(destcompleto, name))
-                            c = ConteinerEscaneado()
-                            c.numero = numero
+                            c = ConteinerEscaneado(numero, fonteimagem)
                             c.arqimagemoriginal = destparcial + '/' + name
-                            c.fonte = fonteimagem
-                            c.pub_date = data
-                            mdate = time.localtime(os.path.getmtime(file))
-                            mdate = time.strftime('%Y-%m-%d %H:%M:%S%z', mdate)
-                            cdate = time.localtime(os.path.getctime(file))
-                            cdate = time.strftime('%Y-%m-%d %H:%M:%S%z', cdate)
+                            c.pub_date = datetime(int(ano), int(mes), int(dia))
+                            mdate = datetime.fromtimestamp(time.mktime(
+                                time.localtime(os.path.getmtime(file))))
+                            cdate = datetime.fromtimestamp(time.mktime(
+                                time.localtime(os.path.getctime(file))))
                             c.file_mdate = mdate
                             c.file_cdate = cdate
                             logger.debug(f'{c.pub_date}, {c.file_mdate}, {c.file_cdate}')
@@ -115,14 +118,12 @@ def carregaarquivos(caminho: str, fonteimagem: FonteImagem):
                             c.operador = operador
                             c.exportado = 0
                             try:
-                                c.save()
+                                session.add(c)
+                                session.commit()
                             except IntegrityError:
                                 erro = True
                                 mensagem = mensagem + destparcial + numero + ' já cadastrado?!\n'
                         numero = None
-        else:
-            mensagem = mensagem + path_origem + ' retornou lista vazia!! Sem acesso? \n'
-            erro = True
     except Exception as err:
         raise (err)
         erro = True

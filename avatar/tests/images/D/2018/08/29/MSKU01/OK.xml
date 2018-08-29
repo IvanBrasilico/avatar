@@ -1,1 +1,6 @@
-<Numero>MSKU01</Numero>
+<xml>
+    <ContainerId>MSKU01</ContainerId>
+    <Date>2018/08/29</Date>
+    <TruckId>truck1</TruckId>
+    <Login>Operador1</Login>
+</xml>

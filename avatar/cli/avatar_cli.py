@@ -11,12 +11,14 @@ from datetime import datetime
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm.exc import NoResultFound
 
-from avatar.cli import session
-from avatar.models.models import Agendamento, FonteImagem
+from avatar.models.models import Agendamento, FonteImagem, MySession
 from avatar.utils.utils import carregaarquivos
 from avatar.utils.logconf import console, logger
 from logging import DEBUG
 
+
+mysession = MySession()
+session = mysession.session
 
 @click.group()
 @click.option('--debug/--no-debug', default=False)
@@ -97,13 +99,13 @@ def copia(ctx, nome, data):
         # TODO: Função para fazer os passos abaixo
         fonte = session.query(FonteImagem).filter(
             FonteImagem.nome == nome).one()
-        agendamento = Agendamento('%Y/%m/%d', fonte)
+        agendamento = Agendamento('%Y\%m\%d', fonte)
         print(datetime.now().strftime('%Y-%m-%d'))
         agendamento.proximocarregamento = datetime.strptime(data, '%Y-%m-%d')
         ###
         print(f'Iniciando cópia de arquivos da Fonte de Imagens {nome}'
               f' a partir de {data}')
-        mensagem, erro = carregaarquivos(agendamento.processamascara(), fonte)
+        mensagem, erro = carregaarquivos(agendamento.processamascara(), fonte, session)
         if erro:
             logger.warning(mensagem)
         else:

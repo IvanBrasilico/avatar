@@ -1,22 +1,18 @@
-# COMO Usuário Local do AVATAR,
-# PRECISO cadastrar uma fonte de dados.
-# PARA permitir a cópia periódica dos arquivos de imagens
+"""Classe para testar modelo do BD.
+
+COMO Usuário Local do AVATAR,
+PRECISO cadastrar uma fonte de dados.
+PARA permitir a cópia periódica dos arquivos de imagens
+
+"""
 
 import unittest
-
+from avatar.tests.base_models_test import BaseModelTest
 from avatar.models.models import (Agendamento, Base, ConteinerEscaneado,
                                   FonteImagem, MySession)
 
 
-class ModelTest(unittest.TestCase):
-
-    def setUp(self):
-        mysession = MySession(arquivo=None)
-        self.session = mysession.session
-        self.engine = mysession.engine
-
-    def tearDown(self):
-        pass
+class ModelTest(BaseModelTest):
 
     def test_fonte_imagem(self):
         fonte = FonteImagem('Fonte 1', 'F1')
