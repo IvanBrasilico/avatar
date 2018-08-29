@@ -22,7 +22,7 @@ try:
         UNIDADE = unidade_file.readline()
 except FileNotFoundError:
     UNIDADE = 'ALFSTS'
-    logger.warning('Arquivo de configuração não encontrado.'
+    logger.warning('Arquivo de configuração não encontrado. '
                    'Usando Unidade "ALFSTS".')
     logger.warning('Crie arquivo unidade.txt para configurar')
 
@@ -48,7 +48,7 @@ def carregaarquivos(caminho: str, fonteimagem: FonteImagem):
     """
     path_origem = os.path.join(fonteimagem.caminho, caminho)
     path_destino = os.path.join(HOMEDIR, 'images')
-    print(f'Origem: {path_origem}')
+    logger.debug(f'Origem: {path_origem}')
     numero = None
     mensagem = ''
     erro = False
@@ -96,7 +96,7 @@ def carregaarquivos(caminho: str, fonteimagem: FonteImagem):
                         copyfile(os.path.join(dirpath, f), os.path.join(destcompleto, f))
                         for file in glob.glob(os.path.join(dirpath, '*mp.jpg')):
                             name = os.path.basename(file)
-                            print(name)
+                            logger.debug(f'Copiango imagem {name}')
                             copyfile(file, os.path.join(destcompleto, name))
                             c = ConteinerEscaneado()
                             c.numero = numero
@@ -133,20 +133,19 @@ def carregaarquivos(caminho: str, fonteimagem: FonteImagem):
 def trata_agendamentos():
     lista_agendamentos = Agendamento.agendamentos_pendentes()
     if len(lista_agendamentos) > 0:
-        print('Tem agendamentos!')
-        with open('log' + datetime.datetime.now().strftime('%Y%m%d'), 'a') as f:
-            for ag in lista_agendamentos:
-                fonte = ag.fonte
-                caminho = ag.processamascara()
-                mensagem, erro = carregaarquivos(caminho, fonte)
-                f.write(mensagem + '\n')
-                if not erro:
-                    ag.proximocarregamento = ag.proximocarregamento + \
-                                             datetime.timedelta(days=ag.diaspararepetir)
-                    ag.save()
-            f.close()
+        logger.warning(f'Processando agendamentos encontrados!!!')
+        for ag in lista_agendamentos:
+            logger.info(ag)
+            fonte = ag.fonte
+            caminho = ag.processamascara()
+            mensagem, erro = carregaarquivos(caminho, fonte)
+            logger.info(mensagem)
+            if not erro:
+                ag.proximocarregamento = ag.proximocarregamento + \
+                                         datetime.timedelta(days=ag.diaspararepetir)
+                ag.save()
     else:
-        print('Não tem agendamentos!')
+        logger.warning('Não foram encontrados agendamentos!!!')
 
 
 def exporta_bson(batch_size=BSON_BATCH_SIZE):
@@ -160,7 +159,7 @@ def exporta_bson(batch_size=BSON_BATCH_SIZE):
     start = nao_exportados[0].pub_date
     end = nao_exportados[batch_size - 1].pub_date
     s1 = time.time()
-    print('Consulta no banco efetuada em ', s1 - s0, ' segundos')
+    logger.info(f'EXPORTA BSON-Consulta no banco durou {s1 - s0}segundos')
     for containerescaneado in nao_exportados:
         # print(containerescaneado.numero)
         imagem = os.path.join(
@@ -180,7 +179,7 @@ def exporta_bson(batch_size=BSON_BATCH_SIZE):
             'recinto': containerescaneado.fonte.nome
         }
     s2 = time.time()
-    print('Dicionário montado em ', s2 - s1, ' segundos')
+    logger.info(f'EXPORTA BSON-Dicionário montado em {s2 - s1} segundos')
     with open('log' + datetime.datetime.now().strftime('%Y%m%d'), 'a') as f:
         bsonimagelist = BsonImageList()
         for key, value in dict_export.items():
@@ -192,9 +191,8 @@ def exporta_bson(batch_size=BSON_BATCH_SIZE):
                 bsonimagelist.addBsonImage(bsonimage)
             except FileNotFoundError as err:
                 f.write(str(err) + '\n')
-                print(str(err))
-                print(value['imagem'])
-
+                logger.error(f'EXPORTA BSON-ERRO:{str(err)}')
+                logger.error(f'EXPORTA BSON-Ao exportar: {value["imagem"]}')
             # Puxa arquivo .xml
             try:
                 xmlfile = jpegfile.split('S_stamp')[0] + '.xml'
@@ -203,19 +201,19 @@ def exporta_bson(batch_size=BSON_BATCH_SIZE):
                 bsonimagelist.addBsonImage(bsonimage)
             except FileNotFoundError as err:
                 f.write(str(err) + '\n')
-                print(str(err))
-                print(value['imagem'])
+                logger.error(f'EXPORTA BSON-ERRO:{str(err)}')
+                logger.error(f'EXPORTA BSON-Ao exportar: {xmlfile}')
         f.close()
     name = datetime.datetime.strftime(start, '%Y-%m-%d_%H-%M-%S') + '_' + \
            datetime.datetime.strftime(end, '%Y-%m-%d_%H-%M-%S')
     s3 = time.time()
-    print('Bson montado em ', s3 - s2, ' segundos')
+    logger.info(f'EXPORTA BSON-Bson montado em {s3 - s2} segundos')
     for containerescaneado in nao_exportados:
         containerescaneado.exportado = 1
         containerescaneado.save()
     s4 = time.time()
-    print('Banco de dados atualizado em ', s4 - s3, ' segundos')
+    logger.info(f'EXPORTA BSON-BD atualizado em {s4 - s3} segundos')
     bsonimagelist.tofile(os.path.join(DEST_PATH, name + '_list.bson'))
     s5 = time.time()
-    print('Bson salvo em ', s5 - s4, ' segundos')
+    logger.info(f'EXPORTA BSON-Bson salvo em {s5 - s4} segundos')
     return dict_export, name, qtde

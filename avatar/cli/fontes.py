@@ -7,13 +7,14 @@ Args:
     batch_size: tamanho do lote de atualização/limite de registros da consulta
 """
 import click
+from datetime import datetime
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm.exc import NoResultFound
 
 from avatar.cli import session
-from avatar.models.models import FonteImagem
+from avatar.models.models import Agendamento, FonteImagem
 from avatar.utils.utils import carregaarquivos
-from avatar.utils.logconf import console
+from avatar.utils.logconf import console, logger
 from logging import DEBUG
 
 
@@ -23,7 +24,10 @@ from logging import DEBUG
 def cli(ctx, debug):
     ctx.obj = debug
     if debug:
+        print('Ativando DEBUG')
         console.setLevel(DEBUG)
+        logger.setLevel(DEBUG)
+        logger.debug('DEBUG ativado')
 
 
 @cli.command()
@@ -70,9 +74,13 @@ def remove(ctx, nome):
         Params:
             nome - Nome da Fonte
     """
-    print(session.query(FonteImagem).filter(FonteImagem.nome == nome).delete())
+    excluido = session.query(FonteImagem).filter(
+        FonteImagem.nome == nome).delete()
     session.commit()
-    print(f'FonteImagem {nome} excluída')
+    if excluido > 0:
+        print(f'FonteImagem {nome} excluída')
+    else:
+        print(f'FonteImagem {nome} não encontrada')
 
 
 @cli.command()
@@ -86,11 +94,20 @@ def copia(ctx, nome, data):
             data - Dia a copiar imagens
     """
     try:
+        # TODO: Função para fazer os passos abaixo
         fonte = session.query(FonteImagem).filter(
             FonteImagem.nome == nome).one()
+        agendamento = Agendamento('%Y/%m/%d', fonte)
+        print(datetime.now().strftime('%Y-%m-%d'))
+        agendamento.proximocarregamento = datetime.strptime(data, '%Y-%m-%d')
+        ###
         print(f'Iniciando cópia de arquivos da Fonte de Imagens {nome}'
               f' a partir de {data}')
-        carregaarquivos('images', fonte)
+        mensagem, erro = carregaarquivos(agendamento.processamascara(), fonte)
+        if erro:
+            logger.warning(mensagem)
+        else:
+            logger.info(mensagem)
     except NoResultFound as err:
         print(f'Fonte "{nome}" não encontrada')
 
@@ -103,7 +120,7 @@ def daemon(ctx):
 
 @cli.command()
 @click.pass_obj
-def daemon(ctx):
+def stats(ctx):
     pass
 
 
