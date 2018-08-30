@@ -53,7 +53,7 @@ def carregaarquivos(agendamento: Agendamento, session):
     fonteimagem = agendamento.fonte
     logger.debug(fonteimagem.caminho, caminho)
     path_origem = os.path.join(fonteimagem.caminho, caminho)
-    path_destino = IMAGES_FOLDER
+    path_destino = os.path.join(IMAGES_FOLDER, fonteimagem.nome)
     logger.debug(f'Origem: {path_origem}')
     mensagem = ''
     erro = False
@@ -192,7 +192,7 @@ def trata_agendamentos(session):
         logger.warning('Não foram encontrados agendamentos!!!')
 
 
-def exporta_bson(session, batch_size:int =BSON_BATCH_SIZE):
+def exporta_bson(session, batch_size: int = BSON_BATCH_SIZE):
     s0 = time.time()
     nao_exportados = session.query(ConteinerEscaneado).filter(
         ConteinerEscaneado.exportado == 0).limit(batch_size).all()
@@ -244,8 +244,8 @@ def exporta_bson(session, batch_size:int =BSON_BATCH_SIZE):
         except FileNotFoundError as err:
             logger.error(f'EXPORTA BSON-ERRO:{str(err)}')
             logger.error(f'EXPORTA BSON-Ao exportar: {xmlfile}')
-    name = datetime.datetime.strftime(start, '%Y-%m-%d_%H-%M-%S') + '_' + \
-           datetime.datetime.strftime(end, '%Y-%m-%d_%H-%M-%S')
+    name = datetime.strftime(start, '%Y-%m-%d_%H-%M-%S') + '_' + \
+           datetime.strftime(end, '%Y-%m-%d_%H-%M-%S')
     s3 = time.time()
     logger.info(f'EXPORTA BSON-Bson montado em {s3 - s2} segundos')
     for containerescaneado in nao_exportados:
@@ -255,9 +255,14 @@ def exporta_bson(session, batch_size:int =BSON_BATCH_SIZE):
     s4 = time.time()
     logger.info(f'EXPORTA BSON-BD atualizado em {s4 - s3} segundos')
     try:
-        bsonimagelist.tofile(os.path.join(BSON_DEST_PATH, name + '_list.bson'))
-    except:
+        if not os.path.exists(BSON_DEST_PATH):
+            os.mkdir(BSON_DEST_PATH)
+        bson_file_name = os.path.join(BSON_DEST_PATH, name + '_list.bson')
+        bsonimagelist.tofile(bson_file_name)
+        logger.warning(f'Exportado para {bson_file_name}')
+    except Exception as err:
         session.rollback()
+        logger.warning(err)
     s5 = time.time()
     logger.info(f'EXPORTA BSON-Bson salvo em {s5 - s4} segundos')
-    return dict_export, name, qtde
+    return dict_export, bson_file_name, qtde

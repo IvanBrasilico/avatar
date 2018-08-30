@@ -111,10 +111,12 @@ class Agendamento(Base):
     diaspararepetir = Column(Integer)
     proximocarregamento = Column(DateTime)  # 'Data do próximo agendamento')
 
-    def __init__(self, mascarafiltro: str, fonte: FonteImagem, data: datetime):
+    def __init__(self, mascarafiltro: str, fonte: FonteImagem,
+                 data: datetime, diaspararepetir: int = 1):
         self.mascarafiltro = mascarafiltro
         self.fonte = fonte
         self.proximocarregamento = data
+        self.diaspararepetir = 1
 
     def processamascara(self):
         return self.proximocarregamento.strftime(self.mascarafiltro)

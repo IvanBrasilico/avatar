@@ -14,71 +14,87 @@ F - XML faltando campos caminho 208/08/29 (testar mensagem XML mal formatado)
 
 """
 import datetime
+import os
 import shutil
 import unittest
 
 from avatar.tests.base_models_test import BaseModelTest
 from avatar.models.models import (Agendamento, FonteImagem)
-from avatar.utils.utils import carregaarquivos
+from avatar.utils.utils import (carregaarquivos, exporta_bson,
+                                trata_agendamentos)
+
+DATA = datetime.datetime(2018, 8, 29)
+CAMINHO = r'avatar\tests\images'
+JPEG_DESTINO = 'avatar/tests/images/D/2018/08/29/MSKU01/msku01fake_stamp.jpg'
 
 
 class CopiaTest(BaseModelTest):
 
+    def cria_fonte_agendamento(self, nome: str):
+        fonte = FonteImagem(nome, os.path.join(CAMINHO, nome))
+        agendamento = Agendamento('%Y\%m\%d', fonte, DATA)
+        self.session.add(fonte)
+        self.session.add(agendamento)
+        self.session.commit()
+        return agendamento
+
     def test_A(self):
-        fonte = FonteImagem('A', r'avatar\tests\images\A')
-        agendamento = Agendamento('%Y\%m\%d', fonte,
-                                  datetime.datetime(2018, 8, 29))
+        agendamento = self.cria_fonte_agendamento('A')
         mensagem, erro = carregaarquivos(agendamento, self.session)
         assert erro is True
         assert 'retornou lista vazia' in mensagem
 
     def test_B(self):
-        fonte = FonteImagem('B', r'avatar\tests\images\B')
-        agendamento = Agendamento('%Y\%m\%d', fonte,
-                                  datetime.datetime(2018, 8, 29))
+        agendamento = self.cria_fonte_agendamento('B')
         mensagem, erro = carregaarquivos(agendamento, self.session)
         assert erro is True
         assert 'XML inválido' in mensagem
 
     def test_F(self):
-        fonte = FonteImagem('F', r'avatar\tests\images\F')
-        agendamento = Agendamento('%Y\%m\%d', fonte,
-                                  datetime.datetime(2018, 8, 29))
+        agendamento = self.cria_fonte_agendamento('F')
         mensagem, erro = carregaarquivos(agendamento, self.session)
         assert erro is True
         assert 'XML inválido' in mensagem
 
     def test_C(self):
-        fonte = FonteImagem('C', r'avatar\tests\images\C')
-        agendamento = Agendamento('%Y\%m\%d', fonte,
-                                  datetime.datetime(2018, 8, 29))
+        agendamento = self.cria_fonte_agendamento('C')
         mensagem, erro = carregaarquivos(agendamento, self.session)
         assert erro is True
         assert 'Imagem não encontrada' in mensagem
 
     def test_D(self):
-        fonte = FonteImagem('D', r'avatar\tests\images\D')
-        agendamento = Agendamento('%Y\%m\%d', fonte,
-                                  datetime.datetime(2018, 8, 29))
+        agendamento = self.cria_fonte_agendamento('D')
         mensagem, erro = carregaarquivos(agendamento, self.session)
         try:
-            shutil.rmtree('images')
+            assert os.path.exists(JPEG_DESTINO)
+            shutil.rmtree('images/D')
         except FileNotFoundError:
             assert False
         assert mensagem == ''
         assert erro is False
 
     def test_E(self):
-        fonte = FonteImagem('E', r'avatar\tests\images\E')
-        agendamento = Agendamento('%Y\%m\%d', fonte,
-                                  datetime.datetime(2018, 8, 29))
+        agendamento = self.cria_fonte_agendamento('E')
         mensagem, erro = carregaarquivos(agendamento, self.session)
         try:
-            shutil.rmtree('images')
+            shutil.rmtree('images/E')
         except FileNotFoundError:
             assert False
         assert mensagem == ''
         assert erro is False
+
+    def test_agendamento_bson(self):
+        agendamento = self.cria_fonte_agendamento('D')
+        trata_agendamentos(self.session)
+        exportados, name, qtde = exporta_bson(self.session, 1)
+        try:
+            assert os.path.exists(JPEG_DESTINO)
+            shutil.rmtree('images/D')
+            print(exportados, name, qtde)
+            assert os.path.exists(name)
+            os.remove(name)
+        except FileNotFoundError:
+            assert False
 
 
 if __name__ == '__main__':
