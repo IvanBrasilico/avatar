@@ -1,11 +1,4 @@
-"""Script de linha de comando para integração do arquivo XML.
-Script de linha de comando para fazer atualização 'manual'
-dos metadados do arquivo XML nas imagens.
-Args:
-    year: ano de início da pesquisa
-    month: mês de início da pesquisa
-    batch_size: tamanho do lote de atualização/limite de registros da consulta
-"""
+"""Script de linha de comando para uso do Avatar."""
 import click
 import time
 from datetime import datetime
@@ -141,7 +134,12 @@ def agendar(ctx, nome, data, mascara):
             return
         print(f'Criando agendamento de cópia de arquivos da Fonte de Imagens '
               f'{nome} a partir de {data} com a máscara {mascara}')
-        agendamento = Agendamento(mascara, fonte, proximocarregamento)
+        if len(fonte.agendamentos) > 0:
+            agendamento = fonte.agendamentos[0]
+            agendamento.mascarafiltro = mascara
+            agendamento.proximocarregamento = proximocarregamento
+        else:
+            agendamento = Agendamento(mascara, fonte, proximocarregamento)
         session.add(agendamento)
         try:
             session.commit()
@@ -180,10 +178,10 @@ def exporta(ctx, lote):
 def daemon(ctx, intervalo, lote):
     """Deixa sistema rodando e processado cópias e exportações."""
     print('Entrando em modo "daemon". Pressione Ctrl+C para encerrar.')
-    proximo = 0 # Loop inicial
+    proximo = 0  # Loop inicial
     while True:
         atual = time.time()
-        if proximo < atual: # Chegou a hora de rodar novamente
+        if proximo < atual:  # Chegou a hora de rodar novamente
             trata_agendamentos(session)
             exporta_bson(session, lote)
             proximo = time.time() + intervalo * 60

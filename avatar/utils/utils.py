@@ -170,6 +170,14 @@ def carregaarquivos(agendamento: Agendamento, session):
 
 
 def trata_agendamentos(session):
+    """Consulta agendamentos pendentes e executa carregaarquivos.
+
+    Consulta agendamentos pendentes e executa carregaarquivos,
+    passando cada um deles.
+
+    Returns:
+        Mensagem de status, erro (True ou False)
+    """
     lista_agendamentos = Agendamento.agendamentos_pendentes(session)
     if len(lista_agendamentos) > 0:
         logger.info(f'Processando agendamentos encontrados!!!')
@@ -188,9 +196,11 @@ def trata_agendamentos(session):
                     timedelta(days=ag.diaspararepetir)
                 session.add(ag)
                 session.commit()
+            return mensagem, erro
     else:
         logger.warning('trata_agendamentos: '
                        'Não foram encontrados agendamentos!!!')
+        return 'Não foram encontrados agendamentos.', True
 
 
 def exporta_bson(session, batch_size: int = BSON_BATCH_SIZE):
