@@ -39,7 +39,7 @@ def cli(ctx, debug):
                    'às imagens (Unidade de disco e pasta)')
 @click.pass_obj
 def add(ctx, nome, caminho):
-    """Adiciona fonte de imagem.
+    """Adiciona fonte de imagem (edita se já existir).
         Params:
             nome - Nome da Fonte
             caminho - Caminho Local para acesso às imagens
@@ -115,13 +115,32 @@ def copia(ctx, nome, data):
 
 @cli.command()
 @click.pass_obj
+def agendamento(ctx):
+    """Processa um agendamento de cópia das fontes de imagem cadastradas."""
+    pass
+
+
+@cli.command()
+@click.pass_obj
+@click.option('--lote', prompt=True, help='Qtde de arquivos em cada BSON gerado')
+def exporta(ctx):
+    """Processa um lote de imagens, exportando para BSON."""
+    pass
+
+
+@cli.command()
+@click.pass_obj
+@click.option('--intervalo', prompt=True, help='Intervalo em minutos entre execuções')
+@click.option('--lote', prompt=True, help='Qtde de arquivos em cada BSON gerado')
 def daemon(ctx):
+    """Deixa sistema rodando e processado cópias e exportações."""
     pass
 
 
 @cli.command()
 @click.pass_obj
 def stats(ctx):
+    """Estatísticas do Banco de Dados ativo."""
     pass
 
 
