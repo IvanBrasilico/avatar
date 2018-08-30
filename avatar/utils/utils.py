@@ -1,4 +1,4 @@
-import datetime
+from datetime import datetime, timedelta
 import fnmatch
 import glob
 import os
@@ -185,7 +185,7 @@ def trata_agendamentos(session):
             if not erro:
                 ag.proximocarregamento = \
                     ag.proximocarregamento + \
-                    datetime.timedelta(days=ag.diaspararepetir)
+                    timedelta(days=ag.diaspararepetir)
                 session.add(ag)
                 session.commit()
     else:
