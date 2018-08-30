@@ -189,7 +189,8 @@ def trata_agendamentos(session):
                 session.add(ag)
                 session.commit()
     else:
-        logger.warning('Não foram encontrados agendamentos!!!')
+        logger.warning('trata_agendamentos: '
+                       'Não foram encontrados agendamentos!!!')
 
 
 def exporta_bson(session, batch_size: int = BSON_BATCH_SIZE):
@@ -198,6 +199,8 @@ def exporta_bson(session, batch_size: int = BSON_BATCH_SIZE):
         ConteinerEscaneado.exportado == 0).limit(batch_size).all()
     qtde = len(nao_exportados)
     if batch_size > qtde:  # Não tem arquivos suficientes ainda
+        logger.warning(f'Qtde {qtde} < batch_size {batch_size}. '
+                       'Abortando exporta_bson.')
         return {}, '', qtde
     dict_export = {}
     start = nao_exportados[0].pub_date
@@ -259,7 +262,7 @@ def exporta_bson(session, batch_size: int = BSON_BATCH_SIZE):
             os.mkdir(BSON_DEST_PATH)
         bson_file_name = os.path.join(BSON_DEST_PATH, name + '_list.bson')
         bsonimagelist.tofile(bson_file_name)
-        logger.warning(f'Exportado para {bson_file_name}')
+        logger.warning(f'{qtde} arquivos exportados para {bson_file_name}')
     except Exception as err:
         session.rollback()
         logger.warning(err)

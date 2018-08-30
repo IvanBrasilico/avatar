@@ -7,6 +7,7 @@ Args:
     batch_size: tamanho do lote de atualização/limite de registros da consulta
 """
 import click
+import time
 from datetime import datetime
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm.exc import NoResultFound
@@ -157,6 +158,7 @@ def agendar(ctx, nome, data, mascara):
 def agendamento(ctx):
     """Processa um agendamento de cópia das fontes de imagem cadastradas."""
     trata_agendamentos(session)
+    print('Fim do comando agendamento.')
 
 
 @cli.command()
@@ -165,18 +167,27 @@ def agendamento(ctx):
               help='Qtde de arquivos em cada BSON gerado')
 def exporta(ctx, lote):
     """Processa um lote de imagens, exportando para BSON."""
-    exporta_bson(session=session, batch_size=lote)
+    _, name, qtde = exporta_bson(session=session, batch_size=lote)
+    print(f'{qtde} arquivos exportados para {name}')
 
 
 @cli.command()
 @click.pass_obj
-@click.option('--intervalo', prompt=True,
+@click.option('--intervalo', prompt=True, default=30,
               help='Intervalo em minutos entre execuções')
-@click.option('--lote', prompt=True,
+@click.option('--lote', prompt=True, default=1000,
               help='Qtde de arquivos em cada BSON gerado')
-def daemon(ctx):
+def daemon(ctx, intervalo, lote):
     """Deixa sistema rodando e processado cópias e exportações."""
-    pass
+    print('Entrando em modo "daemon". Pressione Ctrl+C para encerrar.')
+    proximo = 0 # Loop inicial
+    while True:
+        atual = time.time()
+        if proximo < atual: # Chegou a hora de rodar novamente
+            trata_agendamentos(session)
+            exporta_bson(session, lote)
+            proximo = time.time() + intervalo * 60
+        time.sleep(1)
 
 
 @cli.command()
