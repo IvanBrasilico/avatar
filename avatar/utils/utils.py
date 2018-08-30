@@ -5,19 +5,20 @@ import os
 import time
 import xml.etree.ElementTree as ET
 from xml.etree.ElementTree import ParseError
-from datetime import datetime
 from shutil import copyfile
 from sqlalchemy.exc import IntegrityError
 
-from avatar.models.models import Agendamento, ConteinerEscaneado, FonteImagem
+from avatar.models.models import Agendamento, ConteinerEscaneado
 from avatar.utils.bsonimage import BsonImage, BsonImageList
 from avatar.utils.logconf import logger
 
 # size = (256, 120)
-HOMEDIR = os.getcwd()
-UNIDADE_CONF = os.path.join(HOMEDIR, 'unidade.txt')
 BSON_BATCH_SIZE = 1000
+HOMEDIR = os.getcwd()
+IMAGES_FOLDER = os.path.join(HOMEDIR, 'images')
 BSON_DEST_PATH = os.path.join(HOMEDIR, 'bson')
+
+UNIDADE_CONF = os.path.join(HOMEDIR, 'unidade.txt')
 try:
     with open(UNIDADE_CONF, 'r') as unidade_file:
         UNIDADE = unidade_file.readline()
@@ -29,7 +30,7 @@ except FileNotFoundError:
     logger.warning('Crie arquivo unidade.txt para configurar')
 
 
-def carregaarquivos(caminho: str, fonteimagem: FonteImagem, session):
+def carregaarquivos(agendamento: Agendamento, session):
     """Copia arquivos do caminho na Fonte.
 
     (LAÇO) Verifica se há arquivos XML no sub-diretório da FonteImagem.
@@ -44,19 +45,26 @@ def carregaarquivos(caminho: str, fonteimagem: FonteImagem, session):
             CRIA registro para ConteinerEscaneado relativo a esta cópia
 
     Params:
-        caminho: sub-diretório a copiar
-        fonteimagem: FonteImagem
+        agendamento: Objeto Agendamento a processar
+        session: Conexão com o Banco de Dados
     :return: mensagem: str, erro: bool
     """
-    print(fonteimagem.caminho, caminho)
+    caminho = agendamento.processamascara()
+    fonteimagem = agendamento.fonte
+    logger.debug(fonteimagem.caminho, caminho)
     path_origem = os.path.join(fonteimagem.caminho, caminho)
-    path_destino = os.path.join(HOMEDIR, 'images')
+    path_destino = IMAGES_FOLDER
     logger.debug(f'Origem: {path_origem}')
     mensagem = ''
     erro = False
     try:
-        lista_dir = [dir for dir in os.listdir(path_origem)
-                     if os.path.isdir(os.path.join(path_origem, dir))]
+        try:
+            lista_dir = [dir for dir in os.listdir(path_origem)
+                         if os.path.isdir(os.path.join(path_origem, dir))]
+        except Exception as err:
+            logger.warning(err)
+            mensagem = mensagem + path_origem + str(err)
+            return mensagem, True
         logger.debug(lista_dir)
         if len(lista_dir) == 0:
             logger.debug(f'LISTA DE DIRETÓRIOS VAZIA: {lista_dir}')
@@ -123,11 +131,11 @@ def carregaarquivos(caminho: str, fonteimagem: FonteImagem, session):
                     try:
                         os.makedirs(destcompleto)
                     except FileExistsError as e:
-                        erro = True
                         mensagem = mensagem + \
                                    destcompleto + ' já existente. - pulando\n'
                         continue
-                    copyfile(os.path.join(dirpath, f), os.path.join(destcompleto, f))
+                    copyfile(os.path.join(dirpath, f),
+                             os.path.join(destcompleto, f))
                     for file in lista_jpg:
                         name = os.path.basename(file)
                         logger.debug(f'Copiando imagem {name}')
@@ -141,7 +149,8 @@ def carregaarquivos(caminho: str, fonteimagem: FonteImagem, session):
                             time.localtime(os.path.getctime(file))))
                         c.file_mdate = mdate
                         c.file_cdate = cdate
-                        logger.debug(f'{c.pub_date}, {c.file_mdate}, {c.file_cdate}')
+                        logger.debug(f'{c.pub_date}, {c.file_mdate},'
+                                     f' {c.file_cdate}')
                         c.truckid = truckid
                         c.alerta = alerta
                         c.operador = operador
@@ -151,7 +160,8 @@ def carregaarquivos(caminho: str, fonteimagem: FonteImagem, session):
                             session.commit()
                         except IntegrityError:
                             erro = True
-                            mensagem = mensagem + destparcial + numero + ' já cadastrado?!\n'
+                            mensagem = mensagem + destparcial + numero + \
+                                       ' já cadastrado?!\n'
     except Exception as err:
         raise (err)
         erro = True
@@ -159,28 +169,33 @@ def carregaarquivos(caminho: str, fonteimagem: FonteImagem, session):
     return mensagem, erro
 
 
-def trata_agendamentos():
-    lista_agendamentos = Agendamento.agendamentos_pendentes()
+def trata_agendamentos(session):
+    lista_agendamentos = Agendamento.agendamentos_pendentes(session)
     if len(lista_agendamentos) > 0:
-        logger.warning(f'Processando agendamentos encontrados!!!')
+        logger.info(f'Processando agendamentos encontrados!!!')
         for ag in lista_agendamentos:
             logger.info(ag)
             fonte = ag.fonte
             caminho = ag.processamascara()
-            mensagem, erro = carregaarquivos(caminho, fonte)
-            logger.info(mensagem)
+            mensagem, erro = carregaarquivos(ag, session)
+            if erro:
+                logger.error(mensagem)
+            else:
+                logger.info(mensagem)
             if not erro:
-                ag.proximocarregamento = ag.proximocarregamento + \
-                                         datetime.timedelta(days=ag.diaspararepetir)
-                ag.save()
+                ag.proximocarregamento = \
+                    ag.proximocarregamento + \
+                    datetime.timedelta(days=ag.diaspararepetir)
+                session.add(ag)
+                session.commit()
     else:
         logger.warning('Não foram encontrados agendamentos!!!')
 
 
-def exporta_bson(batch_size=BSON_BATCH_SIZE):
+def exporta_bson(session, batch_size:int =BSON_BATCH_SIZE):
     s0 = time.time()
-    nao_exportados = ConteinerEscaneado.objects.all().filter(
-        exportado=0)[:batch_size]
+    nao_exportados = session.query(ConteinerEscaneado).filter(
+        ConteinerEscaneado.exportado == 0).limit(batch_size).all()
     qtde = len(nao_exportados)
     if batch_size > qtde:  # Não tem arquivos suficientes ainda
         return {}, '', qtde
@@ -209,40 +224,40 @@ def exporta_bson(batch_size=BSON_BATCH_SIZE):
         }
     s2 = time.time()
     logger.info(f'EXPORTA BSON-Dicionário montado em {s2 - s1} segundos')
-    with open('log' + datetime.datetime.now().strftime('%Y%m%d'), 'a') as f:
-        bsonimagelist = BsonImageList()
-        for key, value in dict_export.items():
-            # Puxa arquivo .jpg
-            jpegfile = os.path.join(IMG_FOLDER, value['imagem'])
-            # print(jpegfile)
-            try:
-                bsonimage = BsonImage(filename=jpegfile, **value)
-                bsonimagelist.addBsonImage(bsonimage)
-            except FileNotFoundError as err:
-                f.write(str(err) + '\n')
-                logger.error(f'EXPORTA BSON-ERRO:{str(err)}')
-                logger.error(f'EXPORTA BSON-Ao exportar: {value["imagem"]}')
-            # Puxa arquivo .xml
-            try:
-                xmlfile = jpegfile.split('S_stamp')[0] + '.xml'
-                value['contentType'] = 'text/xml'
-                bsonimage = BsonImage(filename=xmlfile, **value)
-                bsonimagelist.addBsonImage(bsonimage)
-            except FileNotFoundError as err:
-                f.write(str(err) + '\n')
-                logger.error(f'EXPORTA BSON-ERRO:{str(err)}')
-                logger.error(f'EXPORTA BSON-Ao exportar: {xmlfile}')
-        f.close()
+    bsonimagelist = BsonImageList()
+    for key, value in dict_export.items():
+        # Puxa arquivo .jpg
+        jpegfile = os.path.join(IMAGES_FOLDER, value['imagem'])
+        # print(jpegfile)
+        try:
+            bsonimage = BsonImage(filename=jpegfile, **value)
+            bsonimagelist.addBsonImage(bsonimage)
+        except FileNotFoundError as err:
+            logger.error(f'EXPORTA BSON-ERRO:{str(err)}')
+            logger.error(f'EXPORTA BSON-Ao exportar: {value["imagem"]}')
+        # Puxa arquivo .xml
+        try:
+            xmlfile = jpegfile.split('S_stamp')[0] + '.xml'
+            value['contentType'] = 'text/xml'
+            bsonimage = BsonImage(filename=xmlfile, **value)
+            bsonimagelist.addBsonImage(bsonimage)
+        except FileNotFoundError as err:
+            logger.error(f'EXPORTA BSON-ERRO:{str(err)}')
+            logger.error(f'EXPORTA BSON-Ao exportar: {xmlfile}')
     name = datetime.datetime.strftime(start, '%Y-%m-%d_%H-%M-%S') + '_' + \
            datetime.datetime.strftime(end, '%Y-%m-%d_%H-%M-%S')
     s3 = time.time()
     logger.info(f'EXPORTA BSON-Bson montado em {s3 - s2} segundos')
     for containerescaneado in nao_exportados:
         containerescaneado.exportado = 1
-        containerescaneado.save()
+        session.add(containerescaneado)
+    session.commit()
     s4 = time.time()
     logger.info(f'EXPORTA BSON-BD atualizado em {s4 - s3} segundos')
-    bsonimagelist.tofile(os.path.join(DEST_PATH, name + '_list.bson'))
+    try:
+        bsonimagelist.tofile(os.path.join(BSON_DEST_PATH, name + '_list.bson'))
+    except:
+        session.rollback()
     s5 = time.time()
     logger.info(f'EXPORTA BSON-Bson salvo em {s5 - s4} segundos')
     return dict_export, name, qtde

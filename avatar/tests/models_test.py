@@ -5,11 +5,10 @@ PRECISO cadastrar uma fonte de dados.
 PARA permitir a cópia periódica dos arquivos de imagens
 
 """
-
+from datetime import datetime
 import unittest
 from avatar.tests.base_models_test import BaseModelTest
-from avatar.models.models import (Agendamento, Base, ConteinerEscaneado,
-                                  FonteImagem, MySession)
+from avatar.models.models import Agendamento, ConteinerEscaneado, FonteImagem
 
 
 class ModelTest(BaseModelTest):
@@ -40,7 +39,7 @@ class ModelTest(BaseModelTest):
         self.test_fonte_imagem()
         fonte = self.session.query(FonteImagem).filter(
             FonteImagem.nome == 'Fonte 1').one()
-        agendamento = Agendamento('%Y', fonte)
+        agendamento = Agendamento('%Y', fonte, datetime.now())
         self.session.add(agendamento)
         self.session.commit()
         del agendamento

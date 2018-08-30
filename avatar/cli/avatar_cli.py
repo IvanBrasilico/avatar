@@ -12,7 +12,8 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm.exc import NoResultFound
 
 from avatar.models.models import Agendamento, FonteImagem, MySession
-from avatar.utils.utils import carregaarquivos
+from avatar.utils.utils import (carregaarquivos, exporta_bson,
+                                trata_agendamentos)
 from avatar.utils.logconf import console, logger
 from logging import DEBUG
 
@@ -63,6 +64,7 @@ def add(ctx, nome, caminho):
 @click.pass_obj
 def lista(ctx):
     """Lista fontes de imagem cadastradas."""
+    print('Fonte, Caminho')
     fontes = session.query(FonteImagem).all()
     for fonte in fontes:
         print(fonte)
@@ -87,7 +89,7 @@ def remove(ctx, nome):
 
 @cli.command()
 @click.option('--nome', prompt=True, help='Nome da fonte de imagens (Recinto)')
-@click.option('--data', prompt=True, help='Data a copiar')
+@click.option('--data', prompt=True, help='Data a copiar format AAAA-mm-dd')
 @click.pass_obj
 def copia(ctx, nome, data):
     """Copia imagens se disponíveis.
@@ -96,15 +98,18 @@ def copia(ctx, nome, data):
             data - Dia a copiar imagens
     """
     try:
-        # TODO: Função para fazer os passos abaixo
         fonte = session.query(FonteImagem).filter(
             FonteImagem.nome == nome).one()
-        agendamento = Agendamento('%Y\%m\%d', fonte)
-        agendamento.proximocarregamento = datetime.strptime(data, '%Y-%m-%d')
-        ###
+        try:
+            proximocarregamento = datetime.strptime(data, '%Y-%m-%d')
+        except ValueError:
+            print('Formato de data inválido. Formato correto AAAA-MM-DD.')
+            return
+        agendamento = Agendamento('%Y\%m\%d', fonte, proximocarregamento)
         print(f'Iniciando cópia de arquivos da Fonte de Imagens {nome}'
               f' a partir de {data}')
-        mensagem, erro = carregaarquivos(agendamento.processamascara(), fonte, session)
+        mensagem, erro = carregaarquivos(agendamento.processamascara(),
+                                         fonte, session)
         if erro:
             logger.warning(mensagem)
         else:
@@ -114,24 +119,61 @@ def copia(ctx, nome, data):
 
 
 @cli.command()
+@click.option('--nome', prompt=True, help='Nome da fonte de imagens (Recinto)')
+@click.option('--data', prompt=True, help='Data a copiar')
+@click.option('--mascara', default='%Y\%m\%d',
+              help='Máscara (%Y/%m/%d) do caminho')
+@click.pass_obj
+def agendar(ctx, nome, data, mascara):
+    """Cria um agendamento de cópia de imagens.
+        Params:
+            nome - Nome da Fonte
+            data - Dia a copiar imagens
+    """
+    try:
+        fonte = session.query(FonteImagem).filter(
+            FonteImagem.nome == nome).one()
+        try:
+            proximocarregamento = datetime.strptime(data, '%Y-%m-%d')
+        except ValueError:
+            print('Formato de data inválido. Formato correto AAAA-MM-DD.')
+            return
+        print(f'Criando agendamento de cópia de arquivos da Fonte de Imagens '
+              f'{nome} a partir de {data} com a máscara {mascara}')
+        agendamento = Agendamento(mascara, fonte, proximocarregamento)
+        session.add(agendamento)
+        try:
+            session.commit()
+            print(f'Gravado: {agendamento}')
+        except IntegrityError as err:
+            session.rollback()
+            print(f'ERRRO! Provável chave duplicada \n{err}')
+    except NoResultFound as err:
+        print(f'Fonte "{nome}" não encontrada')
+
+
+@cli.command()
 @click.pass_obj
 def agendamento(ctx):
     """Processa um agendamento de cópia das fontes de imagem cadastradas."""
-    pass
+    trata_agendamentos(session)
 
 
 @cli.command()
 @click.pass_obj
-@click.option('--lote', prompt=True, help='Qtde de arquivos em cada BSON gerado')
-def exporta(ctx):
+@click.option('--lote', prompt=True, default=1000,
+              help='Qtde de arquivos em cada BSON gerado')
+def exporta(ctx, lote):
     """Processa um lote de imagens, exportando para BSON."""
-    pass
+    exporta_bson(session=session, batch_size=lote)
 
 
 @cli.command()
 @click.pass_obj
-@click.option('--intervalo', prompt=True, help='Intervalo em minutos entre execuções')
-@click.option('--lote', prompt=True, help='Qtde de arquivos em cada BSON gerado')
+@click.option('--intervalo', prompt=True,
+              help='Intervalo em minutos entre execuções')
+@click.option('--lote', prompt=True,
+              help='Qtde de arquivos em cada BSON gerado')
 def daemon(ctx):
     """Deixa sistema rodando e processado cópias e exportações."""
     pass
@@ -141,7 +183,13 @@ def daemon(ctx):
 @click.pass_obj
 def stats(ctx):
     """Estatísticas do Banco de Dados ativo."""
-    pass
+    fontes = session.query(FonteImagem).all()
+    for fonte in fontes:
+        print(fonte.nome)
+        print(fonte.caminho)
+        print(f'Contêineres carregados no BD:'
+              f'{fonte.total_imagens(session)}')
+        print(f'Próximo agendamento: {fonte.proximo_agendamento(session)}')
 
 
 if __name__ == '__main__':

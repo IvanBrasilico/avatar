@@ -15,6 +15,7 @@ from logging.handlers import RotatingFileHandler
 
 LOGFILEMAXBYTES = 10000
 
+
 def init_log():
     # Log em arquivo
     logrotatefile = RotatingFileHandler('avatar.log', maxBytes=LOGFILEMAXBYTES)
@@ -36,6 +37,7 @@ def init_log():
     logger.addHandler(console)
     logger.addHandler(logrotatefile)
     return console
+
 
 logger = logging.getLogger('avatar')
 if len(logger.handlers) == 0:

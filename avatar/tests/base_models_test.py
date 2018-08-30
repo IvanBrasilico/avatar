@@ -1,7 +1,7 @@
 """Classe base que conecta BD."""
 import unittest
 
-from avatar.models.models import (Base, MySession)
+from avatar.models.models import MySession
 
 
 class BaseModelTest(unittest.TestCase):
