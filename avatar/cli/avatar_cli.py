@@ -16,9 +16,9 @@ from avatar.utils.utils import carregaarquivos
 from avatar.utils.logconf import console, logger
 from logging import DEBUG
 
-
 mysession = MySession()
 session = mysession.session
+
 
 @click.group()
 @click.option('--debug/--no-debug', default=False)

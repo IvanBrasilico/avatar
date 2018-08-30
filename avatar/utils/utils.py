@@ -4,6 +4,7 @@ import glob
 import os
 import time
 import xml.etree.ElementTree as ET
+from xml.etree.ElementTree import ParseError
 from datetime import datetime
 from shutil import copyfile
 from sqlalchemy.exc import IntegrityError
@@ -47,18 +48,20 @@ def carregaarquivos(caminho: str, fonteimagem: FonteImagem, session):
         fonteimagem: FonteImagem
     :return: mensagem: str, erro: bool
     """
+    print(fonteimagem.caminho, caminho)
     path_origem = os.path.join(fonteimagem.caminho, caminho)
     path_destino = os.path.join(HOMEDIR, 'images')
     logger.debug(f'Origem: {path_origem}')
-    numero = None
     mensagem = ''
     erro = False
-    alerta = False
     try:
         lista_dir = [dir for dir in os.listdir(path_origem)
-                     if os.path.isdir(dir)]
-        print(lista_dir)
+                     if os.path.isdir(os.path.join(path_origem, dir))]
+        logger.debug(lista_dir)
         if len(lista_dir) == 0:
+            logger.debug(f'LISTA DE DIRETÓRIOS VAZIA: {lista_dir}')
+            logger.debug(f'Listagem de arquivos: {os.listdir(path_origem)}')
+            logger.debug(f'Caminho: {path_origem}')
             mensagem = mensagem + path_origem + \
                        ' retornou lista vazia!! Sem acesso? \n'
             return mensagem, True
@@ -67,63 +70,88 @@ def carregaarquivos(caminho: str, fonteimagem: FonteImagem, session):
                 for f in fnmatch.filter(files, '*.xml'):
                     logger.debug(f'carregaarquivos - f = {f}')
                     logger.debug(f'carregaarquivos - dir path = {dirpath}')
-                    tree = ET.parse(os.path.join(dirpath, f))
-                    root = tree.getroot()
+                    try:
+                        tree = ET.parse(os.path.join(dirpath, f))
+                        root = tree.getroot()
+                    except ParseError as err:
+                        erro = True
+                        mensagem = \
+                            mensagem + path_origem + \
+                            ' XML inválido. ' + str(err) + '\n'
+                        continue
+
+                    numero = None
+                    data = None
                     for tag in root.iter('ContainerId'):
                         lnumero = tag.text
                         if lnumero is not None:
                             logger.debug(f'carregaarquivos - numero-{lnumero}')
                             numero = lnumero.replace('?', 'X')
-                    for tag in root.iter('TruckId'):
-                        truckid = tag.text
                     for tag in root.iter('Date'):
                         data = tag.text
+                    if numero is None or data is None:
+                        erro = True
+                        mensagem = \
+                            mensagem + path_origem + \
+                            ' XML inválido. ' + \
+                            'XML deve conter chaves ContainerId e Date.'
+                        continue
+
+                    truckid = 'NI'
+                    operador = 'NI'
+                    alerta = False
+                    for tag in root.iter('TruckId'):
+                        truckid = tag.text
                     for tag in root.iter('Login'):
                         operador = tag.text
                     for tag in root:
                         for t in tag.getchildren():
                             if t.text == 'AL':
                                 alerta = True
-                    if numero is not None:
-                        ano = data[:4]
-                        mes = data[5:7]
-                        dia = data[8:10]
-                        destparcial = os.path.join(ano, mes, dia, numero)
-                        destcompleto = os.path.join(path_destino, destparcial)
-                        logger.debug(f'destcompleto {destcompleto}')
+                    ano = data[:4]
+                    mes = data[5:7]
+                    dia = data[8:10]
+                    destparcial = os.path.join(ano, mes, dia, numero)
+                    destcompleto = os.path.join(path_destino, destparcial)
+                    logger.debug(f'destcompleto {destcompleto}')
+                    lista_jpg = glob.glob(os.path.join(dirpath, '*mp.jpg'))
+                    if len(lista_jpg) == 0:
+                        erro = True
+                        mensagem = mensagem + destcompleto + \
+                                   ' Imagem não encontrada.\n'
+                        continue
+                    try:
+                        os.makedirs(destcompleto)
+                    except FileExistsError as e:
+                        erro = True
+                        mensagem = mensagem + \
+                                   destcompleto + ' já existente. - pulando\n'
+                        continue
+                    copyfile(os.path.join(dirpath, f), os.path.join(destcompleto, f))
+                    for file in lista_jpg:
+                        name = os.path.basename(file)
+                        logger.debug(f'Copiando imagem {name}')
+                        copyfile(file, os.path.join(destcompleto, name))
+                        c = ConteinerEscaneado(numero, fonteimagem)
+                        c.arqimagemoriginal = destparcial + '/' + name
+                        c.pub_date = datetime(int(ano), int(mes), int(dia))
+                        mdate = datetime.fromtimestamp(time.mktime(
+                            time.localtime(os.path.getmtime(file))))
+                        cdate = datetime.fromtimestamp(time.mktime(
+                            time.localtime(os.path.getctime(file))))
+                        c.file_mdate = mdate
+                        c.file_cdate = cdate
+                        logger.debug(f'{c.pub_date}, {c.file_mdate}, {c.file_cdate}')
+                        c.truckid = truckid
+                        c.alerta = alerta
+                        c.operador = operador
+                        c.exportado = 0
                         try:
-                            os.makedirs(destcompleto)
-                        except FileExistsError as e:
+                            session.add(c)
+                            session.commit()
+                        except IntegrityError:
                             erro = True
-                            mensagem = mensagem + \
-                                       destcompleto + ' já existente. - pulando\n'
-                            continue
-                        copyfile(os.path.join(dirpath, f), os.path.join(destcompleto, f))
-                        for file in glob.glob(os.path.join(dirpath, '*mp.jpg')):
-                            name = os.path.basename(file)
-                            logger.debug(f'Copiando imagem {name}')
-                            copyfile(file, os.path.join(destcompleto, name))
-                            c = ConteinerEscaneado(numero, fonteimagem)
-                            c.arqimagemoriginal = destparcial + '/' + name
-                            c.pub_date = datetime(int(ano), int(mes), int(dia))
-                            mdate = datetime.fromtimestamp(time.mktime(
-                                time.localtime(os.path.getmtime(file))))
-                            cdate = datetime.fromtimestamp(time.mktime(
-                                time.localtime(os.path.getctime(file))))
-                            c.file_mdate = mdate
-                            c.file_cdate = cdate
-                            logger.debug(f'{c.pub_date}, {c.file_mdate}, {c.file_cdate}')
-                            c.truckid = truckid
-                            c.alerta = alerta
-                            c.operador = operador
-                            c.exportado = 0
-                            try:
-                                session.add(c)
-                                session.commit()
-                            except IntegrityError:
-                                erro = True
-                                mensagem = mensagem + destparcial + numero + ' já cadastrado?!\n'
-                        numero = None
+                            mensagem = mensagem + destparcial + numero + ' já cadastrado?!\n'
     except Exception as err:
         raise (err)
         erro = True

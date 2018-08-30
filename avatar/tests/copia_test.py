@@ -12,6 +12,7 @@ D - XML OK um JPG caminho 208/08/29 (testar se copiou JPEG e XML)
 E - 2X XML OK um JPG caminhos 208/08/29 (testar se copiou 2 cjtos JPEG e XML)
 """
 import datetime
+import shutil
 import os
 import unittest
 
@@ -29,7 +30,7 @@ class CopiaTest(BaseModelTest):
         mensagem, erro = carregaarquivos(agendamento.processamascara(),
                                          fonte, self.session)
         assert erro is True
-        assert "vazia" in mensagem
+        assert 'retornou lista vazia' in mensagem
 
     def test_B(self):
         fonte = FonteImagem('B', r'avatar\tests\images\B')
@@ -38,7 +39,7 @@ class CopiaTest(BaseModelTest):
         mensagem, erro = carregaarquivos(agendamento.processamascara(),
                                          fonte, self.session)
         assert erro is True
-        assert "vazia" in mensagem
+        assert 'XML inválido' in mensagem
 
     def test_C(self):
         fonte = FonteImagem('C', r'avatar\tests\images\C')
@@ -47,7 +48,7 @@ class CopiaTest(BaseModelTest):
         mensagem, erro = carregaarquivos(agendamento.processamascara(),
                                          fonte, self.session)
         assert erro is True
-        assert "vazia" in mensagem
+        assert 'Imagem não encontrada' in mensagem
 
     def test_D(self):
         fonte = FonteImagem('D', r'avatar\tests\images\D')
@@ -56,12 +57,11 @@ class CopiaTest(BaseModelTest):
         mensagem, erro = carregaarquivos(agendamento.processamascara(),
                                          fonte, self.session)
         try:
-            os.rmdir('images')
+            shutil.rmtree('images')
         except FileNotFoundError:
-            pass
-        assert erro is True
-        print(os.getcwd())
-        assert "TESET" in mensagem
+            assert False
+        assert mensagem == ''
+        assert erro is False
 
     def test_E(self):
         fonte = FonteImagem('E', r'avatar\tests\images\E')
@@ -70,11 +70,11 @@ class CopiaTest(BaseModelTest):
         mensagem, erro = carregaarquivos(agendamento.processamascara(),
                                          fonte, self.session)
         try:
-            os.rmdir('images')
+            shutil.rmtree('images')
         except FileNotFoundError:
-            pass
-        assert erro is True
-        assert "vazia" in mensagem
+            assert False
+        assert mensagem == ''
+        assert erro is False
 
 
 if __name__ == '__main__':
