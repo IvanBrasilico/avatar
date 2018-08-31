@@ -3,7 +3,7 @@ import tkinter as tk
 from datetime import datetime
 from tkinter import messagebox
 
-from avatar.models.models import Agendamento, FonteImagem
+from avatar.models.models import Agendamento
 
 
 class AgendamentoForm():
@@ -15,12 +15,13 @@ class AgendamentoForm():
         self.fonte = fonte
         self.top = tk.Toplevel()
         self.cria_form()
+        self.agendamento = None
 
     def cria_form(self):
-        self.top.title("Agendamento")
-        tk.Label(self.top, text="Próximo agendamento").grid(row=0)
-        tk.Label(self.top, text="Máscara").grid(row=1)
-        tk.Label(self.top, text="Dias para repetir").grid(row=1)
+        self.top.title('Agendamento')
+        tk.Label(self.top, text='Próximo agendamento').grid(row=0)
+        tk.Label(self.top, text='Máscara').grid(row=1)
+        tk.Label(self.top, text='Dias para repetir').grid(row=1)
         self.edtProximo = tk.Entry(self.top)
         self.edtMascara = tk.Entry(self.top)
         self.edtDias = tk.Entry(self.top)
@@ -31,15 +32,16 @@ class AgendamentoForm():
             row=3, column=0, sticky=tk.W, pady=4)
         tk.Button(self.top, text='Salvar', command=self.save).grid(
             row=3, column=1, sticky=tk.W, pady=4)
-        if self.fonte.agendamentos and len(self.fonte.agendamentos > 0):
+        if self.fonte.agendamentos and len(self.fonte.agendamentos) > 0:
             agendamento = self.fonte.agendamentos[0]
-            self.edtProximo.insert(10, agendamento.get_proximocarregamento_fmt())
+            self.edtProximo.insert(
+                10, agendamento.get_proximocarregamento_fmt())
             self.edtMascara.insert(10, agendamento.mascarafiltro)
             self.edtDias.insert(10, agendamento.diaspararepetir)
             self.agendamento = agendamento
         else:
             self.edtProximo.insert(10,
-                                   datetime.now().strftime('%Y-%m-%d %h:%M'))
+                                   datetime.now().strftime('%Y-%m-%d %H:%M'))
             self.edtMascara.insert(10, '%Y\%m\%d')
             self.edtDias.insert(10, 1)
 
@@ -47,9 +49,14 @@ class AgendamentoForm():
         try:
             if not self.agendamento:
                 self.agendamento = Agendamento(self.edtMascara.get(),
-                                               self.fonte)
+                                               self.fonte,
+                                               datetime.now())
             self.agendamento.set_proximocarregamento(self.edtProximo.get())
-            self.agendamento.diaspararepetir = self.edtDias.get()
+            try:
+                self.agendamento.diaspararepetir = int(self.edtDias.get())
+            except ValueError:
+                raise ValueError(self.edtDias.get() +
+                                 'não é um número válido.')
             self.agendamento.mascarafiltro = self.edtMascara.get()
             self.top.destroy()
             del self

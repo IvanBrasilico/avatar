@@ -84,7 +84,7 @@ class CopiaTest(BaseModelTest):
         assert erro is False
 
     def test_agendamento_bson(self):
-        agendamento = self.cria_fonte_agendamento('D')
+        self.cria_fonte_agendamento('D')
         trata_agendamentos(self.session)
         exportados, name, qtde = exporta_bson(self.session, 1)
         try:

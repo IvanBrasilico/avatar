@@ -6,9 +6,9 @@ import sys
 from tkinter import messagebox
 from threading import Thread
 
-from avatar.models.models import Agendamento, FonteImagem, MySession
+from avatar.models.models import FonteImagem, MySession
 from avatar.tkgui.frmFonte import FonteForm
-from avatar.utils.utils import (carregaarquivos, exporta_bson,
+from avatar.utils.utils import (exporta_bson,
                                 trata_agendamentos)
 from avatar.utils.logconf import logger
 from logging import DEBUG
@@ -16,13 +16,14 @@ from logging import DEBUG
 LOTE = 1
 INTERVALO = 30
 
+
 class Application(tk.Frame):
     def __init__(self, session, master):
         super().__init__(master)
         self.session = session
         self.pack()
         self.create_widgets()
-        master.protocol("WM_DELETE_WINDOW", self._close)
+        master.protocol('WM_DELETE_WINDOW', self._close)
 
     def create_widgets(self):
         self.listbox = tk.Listbox(self)
@@ -77,7 +78,7 @@ class Application(tk.Frame):
             return self.session.query(FonteImagem).filter(
                 FonteImagem.nome == nome).first()
         else:
-            messagebox.showinfo('Editar', "Selecione um item da lista")
+            messagebox.showinfo('Editar', 'Selecione um item da lista')
 
     def edita_fonte(self):
         fonte = self.get_fonte()
@@ -92,7 +93,7 @@ class Application(tk.Frame):
         if fonte:
             try:
                 fonte.exclui(self.session)
-                messagebox.showinfo('Excluir', "Fonte de Imagem Excluída.")
+                messagebox.showinfo('Excluir', 'Fonte de Imagem Excluída.')
                 self.update_fontes()
             except Exception as err:
                 messagebox.showerror('Excluir', str(err))
@@ -140,6 +141,7 @@ class Application(tk.Frame):
             self.daemon_signal = False
             self.daemon.join(timeout=30)
         self.quit()
+
 
 if '--debug' in sys.argv:
     print('Iniciando modo DEBUG')

@@ -183,8 +183,6 @@ def trata_agendamentos(session):
         logger.info(f'Processando agendamentos encontrados!!!')
         for ag in lista_agendamentos:
             logger.info(ag)
-            fonte = ag.fonte
-            caminho = ag.processamascara()
             mensagem, erro = carregaarquivos(ag, session)
             if erro:
                 logger.error(mensagem)
