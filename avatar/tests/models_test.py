@@ -21,6 +21,27 @@ class ModelTest(BaseModelTest):
         fonte = self.session.query(FonteImagem).filter(
             FonteImagem.nome == 'Fonte 1').one()
         assert fonte.caminho == 'F1'
+        return fonte
+
+    def test_fonte_imagem_exclui(self):
+        fonte = self.test_fonte_imagem()
+        fonte.exclui(self.session)
+        fonte = self.session.query(FonteImagem).filter(
+            FonteImagem.nome == 'Fonte 1').first()
+        assert fonte == None
+
+    def test_fonte_imagem_exclui_com_container(self):
+        fonte = self.test_fonte_imagem()
+        conteiner = ConteinerEscaneado('C1', fonte)
+        self.session.add(conteiner)
+        self.session.commit()
+        with self.assertRaises(Exception) as context:
+            fonte.exclui(self.session)
+            self.assertTrue('imagens' in context.exception)
+        fonte = self.session.query(FonteImagem).filter(
+            FonteImagem.nome == 'Fonte 1').one()
+
+
 
     def test_conteinerescaneado(self):
         self.test_fonte_imagem()

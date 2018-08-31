@@ -1,7 +1,8 @@
 import tkinter as tk
+from tkinter import messagebox
 
 from avatar.models.models import FonteImagem
-from tkinter import messagebox
+from avatar.tkgui.frmAgendamento import AgendamentoForm
 
 
 class FonteForm():
@@ -25,33 +26,31 @@ class FonteForm():
             row=3, column=0, sticky=tk.W, pady=4)
         tk.Button(self.top, text='Salvar', command=self.save).grid(
             row=3, column=1, sticky=tk.W, pady=4)
+        tk.Button(self.top, text='Agendar', command=self.agendamento).grid(
+            row=3, column=2, sticky=tk.W, pady=4)
         if self.fonte:
             self.edtNome.insert(10, self.fonte.nome)
             self.edtCaminho.insert(10, self.fonte.caminho)
 
     def save(self):
         try:
-            FonteImagem.cria_ou_edita(self.session,
+            fonte, msg = FonteImagem.cria_ou_edita(self.session,
                                       self.edtNome.get(),
                                       self.edtCaminho.get())
             self.main.update_fontes()
+            messagebox.showinfo('FonteImagem', msg)
             self.top.destroy()
             del self
         except Exception as err:
             messagebox.showerror('Erro!', str(err))
 
 
-def frm_fonte(fonte):
-    this = tk.Toplevel()
-    this.title("Fonte de Imagens")
-    tk.Label(this, text="Nome").grid(row=0)
-    tk.Label(this, text="Caminho").grid(row=1)
-    e1 = tk.Entry(this)
-    e2 = tk.Entry(this)
-    e1.grid(row=0, column=1)
-    e2.grid(row=1, column=1)
-    tk.Button(this, text='Cancelar', command=this.destroy).grid(row=3, column=0, sticky=W, pady=4)
-    tk.Button(this, text='Salvar').grid(row=3, column=1, sticky=W, pady=4)
-    if fonte:
-        e1.insert(10, fonte.nome)
-        e2.insert(10, fonte.caminho)
+    def agendamento(self):
+        try:
+            fonte, msg = FonteImagem.cria_ou_edita(self.session,
+                                      self.edtNome.get(),
+                                      self.edtCaminho.get())
+            self.main.update_fontes()
+            AgendamentoForm(self, fonte)
+        except Exception as err:
+            messagebox.showerror('Erro!', str(err))

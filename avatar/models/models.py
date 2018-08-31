@@ -102,6 +102,17 @@ class FonteImagem(Base):
             session.rollback()
             return None, str(err)
 
+    def exclui(self, session):
+        if len(self.imagens) > 0:
+            raise Exception('Fonte com importações de imagens já realizadas.'
+                            'Não posso excluir.')
+        session.delete(self)
+        try:
+            session.commit()
+        except Exception as err:
+            self.session.rollback()
+            raise err
+
 
 class ConteinerEscaneado(Base):
     __tablename__ = 'conteineresescaneados'
@@ -140,10 +151,21 @@ class Agendamento(Base):
         self.mascarafiltro = mascarafiltro
         self.fonte = fonte
         self.proximocarregamento = data
-        self.diaspararepetir = 1
+        self.diaspararepetir = diaspararepetir
 
     def processamascara(self):
         return self.proximocarregamento.strftime(self.mascarafiltro)
+
+
+    def set_proximocarregamento(self, data):
+        try:
+            self.proximocarregamento = datetime.strptime(data, '%Y-%m-%d %h:%M')
+        except ValueError:
+            raise ValueError(
+                'Formato de data inválido. Formato correto AAAA-MM-DD hh:mm')
+
+    def get_proximocarregamento_fmt(self):
+        return self.proximocarregamento.strftime('%Y-%m-%d %h:%M')
 
     @classmethod
     def agendamentos_pendentes(cls, session):
