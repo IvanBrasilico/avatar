@@ -1,8 +1,9 @@
-import datetime
+from datetime import datetime
 import os
 
 from sqlalchemy import (Boolean, Column, DateTime, ForeignKey, Integer, String,
                         create_engine)
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, scoped_session, sessionmaker
 
@@ -75,8 +76,31 @@ class FonteImagem(Base):
     def proximo_agendamento(self, session):
         return session.query(Agendamento).filter(
             Agendamento.fonte_id == self.id,
-            Agendamento.proximocarregamento > datetime.datetime.now()
+            Agendamento.proximocarregamento > datetime.now()
         ).first()
+
+    @classmethod
+    def cria_ou_edita(cls, session, nome: str, caminho: str,
+                      pub_date: DateTime = None):
+        """Retorna fonte de nome 'nome' se existente ou nova se não existe."""
+        fonte = session.query(FonteImagem).filter(
+            FonteImagem.nome == nome).first()
+        if fonte is None:  # Cria novo
+            fonte = FonteImagem(nome, caminho)
+            if pub_date is None:  # default now()
+                pub_date = datetime.now()
+            fonte.pub_date = pub_date
+        else:  # Edita existente
+            fonte.caminho = caminho
+            if pub_date:  # Só edita se passar valor explícito
+                fonte.pub_date = pub_date
+        session.add(fonte)
+        try:
+            session.commit()
+            return fonte, f'Gravado: {str(fonte)}'
+        except IntegrityError as err:
+            session.rollback()
+            return None, str(err)
 
 
 class ConteinerEscaneado(Base):
@@ -124,13 +148,13 @@ class Agendamento(Base):
     @classmethod
     def agendamentos_pendentes(cls, session):
         return session.query(Agendamento).filter(
-            Agendamento.proximocarregamento < datetime.datetime.now()
+            Agendamento.proximocarregamento < datetime.now()
         ).all()
 
     @classmethod
     def agendamentos_programados(cls, session):
         return session.query(Agendamento).filter(
-            Agendamento.proximocarregamento < datetime.datetime.now()
+            Agendamento.proximocarregamento < datetime.now()
         ).all()
 
     def __str__(self):

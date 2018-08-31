@@ -40,18 +40,8 @@ def add(ctx, nome, caminho):
             caminho - Caminho Local para acesso às imagens
              (Unidade de disco e pasta)
     """
-    fonte = session.query(FonteImagem).filter(FonteImagem.nome == nome).first()
-    if fonte is None:
-        fonte = FonteImagem(nome, caminho)
-    else:
-        fonte.caminho = caminho
-    session.add(fonte)
-    try:
-        session.commit()
-        print(f'Gravado: {fonte}')
-    except IntegrityError as err:
-        session.rollback()
-        print(f'ERRRO! Provável chave duplicada \n{err}')
+    fonte, mensagem = FonteImagem.cria_ou_edita(session, nome, caminho)
+    print(mensagem)
 
 
 @cli.command()

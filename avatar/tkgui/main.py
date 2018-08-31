@@ -1,16 +1,13 @@
 """Interface gráfica para uso do Avatar."""
-import time
-from datetime import datetime
-from sqlalchemy.exc import IntegrityError
+import tkinter as tk
+from tkinter import messagebox
 from sqlalchemy.orm.exc import NoResultFound
 
 from avatar.models.models import Agendamento, FonteImagem, MySession
+from avatar.tkgui.frmFonte import FonteForm
 from avatar.utils.utils import (carregaarquivos, exporta_bson,
                                 trata_agendamentos)
-from avatar.utils.logconf import console, logger
-from logging import DEBUG
-import tkinter as tk
-from tkinter import messagebox
+from avatar.utils.logconf import logger
 
 
 class Application(tk.Frame):
@@ -23,17 +20,15 @@ class Application(tk.Frame):
     def create_widgets(self):
         self.listbox = tk.Listbox(self)
         self.listbox.pack(side='left')
-        fontes = self.session.query(FonteImagem).all()
-        for fonte in fontes:
-            self.listbox.insert(tk.END, fonte.nome)
+        self.update_fontes()
 
         self.btnNovaFonte = tk.Button(self)
         self.btnNovaFonte['text'] = 'Nova Fonte de Imagem'
-        self.btnNovaFonte['command'] = self.edita_fonte(True)
+        self.btnNovaFonte['command'] = self.janela_fonte
         self.btnNovaFonte.pack(side='top')
         self.btnEditaFonte = tk.Button(self)
         self.btnEditaFonte['text'] = 'Editar Fonte de Imagem'
-        self.btnEditaFonte['command'] = self.edita_fonte(False)
+        self.btnEditaFonte['command'] = self.edita_fonte
         self.btnEditaFonte.pack(side='top')
         self.btnAgendamento = tk.Button(self)
         self.btnAgendamento['text'] = 'Trata agendamentos'
@@ -43,9 +38,15 @@ class Application(tk.Frame):
         self.btnExportaBSON['text'] = 'Exporta BSON'
         self.btnExportaBSON['command'] = self.exporta_bson
         self.btnExportaBSON.pack(side='top')
-        self.btnQuit = tk.Button(self, text='QUIT', fg='red',
-                              command=root.destroy)
+        self.btnQuit = tk.Button(self, text='Sair',
+                                 command=root.destroy)
         self.btnQuit.pack(side='bottom')
+
+    def update_fontes(self):
+        self.listbox.delete(0, tk.END)
+        fontes = self.session.query(FonteImagem).all()
+        for fonte in fontes:
+            self.listbox.insert(tk.END, fonte.nome)
 
     def trata_agendamento(self):
         mensagem, erro = trata_agendamentos(self.session)
@@ -54,17 +55,25 @@ class Application(tk.Frame):
         else:
             messagebox.showinfo('Trata agendamentos', mensagem)
 
-    def exporta_bson(self, lote=1000):
-        _, name, qtde = exporta_bson(session=self.session, batch_size=lote)
+    def exporta_bson(self):
+        _, name, qtde = exporta_bson(session=self.session, batch_size=1000)
         messagebox.showinfo('Exporta BSON',
                             f'{qtde} arquivos exportados. {name}')
 
-    def edita_fonte(self, nova: bool=True):
-        if nova:
-            fonte = FonteImagem()
+    def edita_fonte(self):
+        select = self.listbox.curselection()
+        if select:
+            nome = self.listbox.get(select)
+            fonte = self.session.query(FonteImagem).filter(
+                FonteImagem.nome == nome).first()
+            self.janela_fonte(fonte)
         else:
-            pass
-        # Open Window
+            messagebox.showinfo('Editar', "Selecione um item da lista")
+
+    def janela_fonte(self, fonte=None):
+        FonteForm(self, fonte)
+
+
 mysession = MySession()
 root = tk.Tk()
 app = Application(mysession.session, master=root)
