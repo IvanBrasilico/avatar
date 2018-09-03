@@ -59,6 +59,10 @@ class Application(tk.Frame):
         self.btnDaemon['text'] = 'Iniciar Serviço'
         self.btnDaemon['command'] = self.daemon_toggle
         self.btnDaemon.pack(side='top')
+        self.btnStats = tk.Button(self, text='Estatísticas',
+                                 command=self.stats,
+                                 width=BTN_WIDTH)
+        self.btnStats.pack(side='top')
         self.btnQuit = tk.Button(self, text='Sair',
                                  command=self._close,
                                  width=BTN_WIDTH)
@@ -141,6 +145,19 @@ class Application(tk.Frame):
             self.daemon_signal = False
             self.daemon.join(timeout=30)
         self.quit()
+
+    def stats(self):
+        """Estatísticas do Banco de Dados ativo."""
+        fontes = self.session.query(FonteImagem).all()
+        mensagem = ''
+        for fonte in fontes:
+            mensagem = mensagem + fonte.nome + '\n'
+            mensagem = mensagem + fonte.caminho + '\n'
+            mensagem = mensagem + 'Contêineres carregados no BD: ' + \
+                       str(fonte.total_imagens(self.session)) + '\n'
+            mensagem = mensagem + 'Próximo agendamento: ' + \
+                       str(fonte.proximo_agendamento(self.session)) + '\n'
+        messagebox.showinfo('Stats', mensagem)
 
 
 if '--debug' in sys.argv:
