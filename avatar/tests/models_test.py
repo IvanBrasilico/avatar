@@ -28,7 +28,7 @@ class ModelTest(BaseModelTest):
         fonte.exclui(self.session)
         fonte = self.session.query(FonteImagem).filter(
             FonteImagem.nome == 'Fonte 1').first()
-        assert fonte == None
+        assert fonte is None
 
     def test_fonte_imagem_exclui_com_container(self):
         fonte = self.test_fonte_imagem()
@@ -40,8 +40,6 @@ class ModelTest(BaseModelTest):
             self.assertTrue('imagens' in context.exception)
         fonte = self.session.query(FonteImagem).filter(
             FonteImagem.nome == 'Fonte 1').one()
-
-
 
     def test_conteinerescaneado(self):
         self.test_fonte_imagem()

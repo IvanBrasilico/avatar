@@ -15,9 +15,9 @@ class FonteForm():
         self.cria_form()
 
     def cria_form(self):
-        self.top.title("Fonte de Imagens")
-        tk.Label(self.top, text="Nome").grid(row=0)
-        tk.Label(self.top, text="Caminho").grid(row=1)
+        self.top.title('Fonte de Imagens')
+        tk.Label(self.top, text='Nome').grid(row=0)
+        tk.Label(self.top, text='Caminho').grid(row=1)
         self.edtNome = tk.Entry(self.top)
         self.edtCaminho = tk.Entry(self.top)
         self.edtNome.grid(row=0, column=1)
@@ -35,8 +35,8 @@ class FonteForm():
     def save(self):
         try:
             fonte, msg = FonteImagem.cria_ou_edita(self.session,
-                                      self.edtNome.get(),
-                                      self.edtCaminho.get())
+                                                   self.edtNome.get(),
+                                                   self.edtCaminho.get())
             self.main.update_fontes()
             messagebox.showinfo('FonteImagem', msg)
             self.top.destroy()
@@ -44,12 +44,11 @@ class FonteForm():
         except Exception as err:
             messagebox.showerror('Erro!', str(err))
 
-
     def agendamento(self):
         try:
             fonte, msg = FonteImagem.cria_ou_edita(self.session,
-                                      self.edtNome.get(),
-                                      self.edtCaminho.get())
+                                                   self.edtNome.get(),
+                                                   self.edtCaminho.get())
             self.main.update_fontes()
             AgendamentoForm(self, fonte)
         except Exception as err:

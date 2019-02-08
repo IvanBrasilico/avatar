@@ -1,11 +1,12 @@
 from datetime import datetime
 import os
 
-from sqlalchemy import (Boolean, Column, DateTime, ForeignKey, Integer, String,
+from sqlalchemy import (Column, DateTime, ForeignKey, Integer, String,
                         create_engine)
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, scoped_session, sessionmaker
+from sqlalchemy.ext import baked
 
 Base = declarative_base()
 
@@ -40,6 +41,7 @@ class MySession():
             Base.metadata.bind = self._engine
             if not os.path.exists(arquivo):
                 Base.metadata.create_all(self._engine)
+        self.baked = baked
 
     @property
     def session(self):
@@ -156,16 +158,16 @@ class Agendamento(Base):
     def processamascara(self):
         return self.proximocarregamento.strftime(self.mascarafiltro)
 
-
     def set_proximocarregamento(self, data):
         try:
-            self.proximocarregamento = datetime.strptime(data, '%Y-%m-%d %h:%M')
+            self.proximocarregamento = datetime.strptime(data,
+                                                         '%Y-%m-%d %H:%M')
         except ValueError:
-            raise ValueError(
+            raise ValueError(data +
                 'Formato de data inválido. Formato correto AAAA-MM-DD hh:mm')
 
     def get_proximocarregamento_fmt(self):
-        return self.proximocarregamento.strftime('%Y-%m-%d %h:%M')
+        return self.proximocarregamento.strftime('%Y-%m-%d %H:%M')
 
     @classmethod
     def agendamentos_pendentes(cls, session):

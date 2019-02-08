@@ -6,9 +6,9 @@ import sys
 from tkinter import messagebox
 from threading import Thread
 
-from avatar.models.models import Agendamento, FonteImagem, MySession
+from avatar.models.models import FonteImagem, MySession
 from avatar.tkgui.frmFonte import FonteForm
-from avatar.utils.utils import (carregaarquivos, exporta_bson,
+from avatar.utils.utils import (exporta_bson,
                                 trata_agendamentos)
 from avatar.utils.logconf import logger
 from logging import DEBUG
@@ -16,13 +16,14 @@ from logging import DEBUG
 LOTE = 1
 INTERVALO = 30
 
+
 class Application(tk.Frame):
     def __init__(self, session, master):
         super().__init__(master)
         self.session = session
         self.pack()
         self.create_widgets()
-        master.protocol("WM_DELETE_WINDOW", self._close)
+        master.protocol('WM_DELETE_WINDOW', self._close)
 
     def create_widgets(self):
         self.listbox = tk.Listbox(self)
@@ -58,6 +59,10 @@ class Application(tk.Frame):
         self.btnDaemon['text'] = 'Iniciar Serviço'
         self.btnDaemon['command'] = self.daemon_toggle
         self.btnDaemon.pack(side='top')
+        self.btnStats = tk.Button(self, text='Estatísticas',
+                                 command=self.stats,
+                                 width=BTN_WIDTH)
+        self.btnStats.pack(side='top')
         self.btnQuit = tk.Button(self, text='Sair',
                                  command=self._close,
                                  width=BTN_WIDTH)
@@ -77,7 +82,7 @@ class Application(tk.Frame):
             return self.session.query(FonteImagem).filter(
                 FonteImagem.nome == nome).first()
         else:
-            messagebox.showinfo('Editar', "Selecione um item da lista")
+            messagebox.showinfo('Editar', 'Selecione um item da lista')
 
     def edita_fonte(self):
         fonte = self.get_fonte()
@@ -92,7 +97,7 @@ class Application(tk.Frame):
         if fonte:
             try:
                 fonte.exclui(self.session)
-                messagebox.showinfo('Excluir', "Fonte de Imagem Excluída.")
+                messagebox.showinfo('Excluir', 'Fonte de Imagem Excluída.')
                 self.update_fontes()
             except Exception as err:
                 messagebox.showerror('Excluir', str(err))
@@ -140,6 +145,20 @@ class Application(tk.Frame):
             self.daemon_signal = False
             self.daemon.join(timeout=30)
         self.quit()
+
+    def stats(self):
+        """Estatísticas do Banco de Dados ativo."""
+        fontes = self.session.query(FonteImagem).all()
+        mensagem = ''
+        for fonte in fontes:
+            mensagem = mensagem + fonte.nome + '\n'
+            mensagem = mensagem + fonte.caminho + '\n'
+            mensagem = mensagem + 'Contêineres carregados no BD: ' + \
+                       str(fonte.total_imagens(self.session)) + '\n'
+            mensagem = mensagem + 'Próximo agendamento: ' + \
+                       str(fonte.proximo_agendamento(self.session)) + '\n'
+        messagebox.showinfo('Stats', mensagem)
+
 
 if '--debug' in sys.argv:
     print('Iniciando modo DEBUG')
