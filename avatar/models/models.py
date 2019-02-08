@@ -60,7 +60,7 @@ class FonteImagem(Base):
     caminho = Column(String(200), unique=True)
     pub_date = Column(DateTime)
     imagens = relationship('ConteinerEscaneado', back_populates='fonte')
-    agendamentos = relationship('Agendamento', back_populates='fonte')
+    agendamento = relationship('Agendamento', back_populates='fonte', uselist=False)
 
     def __init__(self, nome: str, caminho: str):
         self.nome = nome
@@ -140,7 +140,7 @@ class Agendamento(Base):
     __tablename__ = 'agendamentos'
     id = Column(Integer, primary_key=True)
     fonte_id = Column(Integer, ForeignKey('fontesimagem.id'))
-    fonte = relationship('FonteImagem', back_populates='agendamentos')
+    fonte = relationship('FonteImagem', back_populates='agendamento')
     mascarafiltro = Column(String(20))
     # 'Mascara no formato " % Y % m % d" mais qualquer literal', max_length=20)
     diaspararepetir = Column(Integer)

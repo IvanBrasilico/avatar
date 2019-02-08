@@ -9,5 +9,13 @@ $ git clone http://github.com/avatar.git
 $ pip install -e .[dev]
 ```
 
+Criação de executável
+
+```
+> pyinstaller --onefile avatar/tkgui/avatar_gui.py
+
+> pyinstaller --onefile avatar/cli/avatar_cli.py
+```
+
 
 

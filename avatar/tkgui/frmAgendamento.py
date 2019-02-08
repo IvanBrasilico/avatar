@@ -31,8 +31,8 @@ class AgendamentoForm():
             row=3, column=0, sticky=tk.W, pady=4)
         tk.Button(self.top, text='Salvar', command=self.save).grid(
             row=3, column=1, sticky=tk.W, pady=4)
-        if self.fonte.agendamentos and len(self.fonte.agendamentos > 0):
-            agendamento = self.fonte.agendamentos[0]
+        if self.fonte.agendamento:
+            agendamento = self.fonte.agendamento
             self.edtProximo.insert(10, agendamento.get_proximocarregamento_fmt())
             self.edtMascara.insert(10, agendamento.mascarafiltro)
             self.edtDias.insert(10, agendamento.diaspararepetir)
@@ -51,6 +51,8 @@ class AgendamentoForm():
             self.agendamento.set_proximocarregamento(self.edtProximo.get())
             self.agendamento.diaspararepetir = self.edtDias.get()
             self.agendamento.mascarafiltro = self.edtMascara.get()
+            self.session.save(self.agendamento)
+            self.session.commit()
             self.top.destroy()
             del self
         except Exception as err:
