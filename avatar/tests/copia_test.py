@@ -50,12 +50,6 @@ class CopiaTest(BaseModelTest):
         assert erro is True
         assert 'XML inválido' in mensagem
 
-    def test_F(self):
-        agendamento = self.cria_fonte_agendamento('F')
-        mensagem, erro = carregaarquivos(agendamento, self.session)
-        assert erro is True
-        assert 'XML inválido' in mensagem
-
     def test_C(self):
         agendamento = self.cria_fonte_agendamento('C')
         mensagem, erro = carregaarquivos(agendamento, self.session)
@@ -82,6 +76,11 @@ class CopiaTest(BaseModelTest):
             assert False
         assert mensagem == ''
         assert erro is False
+
+    def test_F(self):
+        agendamento = self.cria_fonte_agendamento('F')
+        mensagem, erro = carregaarquivos(agendamento, self.session)
+        assert 'XML inválido' in mensagem
 
     def test_agendamento_bson(self):
         self.cria_fonte_agendamento('D')

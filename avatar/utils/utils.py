@@ -13,7 +13,7 @@ from avatar.utils.bsonimage import BsonImage, BsonImageList
 from avatar.utils.logconf import logger
 
 # size = (256, 120)
-BSON_BATCH_SIZE = 1000
+BSON_BATCH_SIZE = 400
 HOMEDIR = os.getcwd()
 IMAGES_FOLDER = os.path.join(HOMEDIR, 'images')
 BSON_DEST_PATH = os.path.join(HOMEDIR, 'bson')
@@ -193,7 +193,7 @@ def trata_agendamentos(session):
                     timedelta(days=ag.diaspararepetir)
                 session.add(ag)
                 session.commit()
-            return mensagem, erro
+        return mensagem, erro
     else:
         logger.warning('trata_agendamentos: '
                        'Não foram encontrados agendamentos!!!')
@@ -223,6 +223,7 @@ def exporta_bson(session, batch_size: int = BSON_BATCH_SIZE):
             'id': UNIDADE + str(containerescaneado.id),
             'UNIDADE': UNIDADE,
             'idcov': str(containerescaneado.id),
+            'fonte': containerescaneado.fonte.nome,
             'imagem': imagem,
             'dataescaneamento': containerescaneado.pub_date,
             'criacaoarquivo': containerescaneado.file_cdate,
@@ -237,7 +238,7 @@ def exporta_bson(session, batch_size: int = BSON_BATCH_SIZE):
     bsonimagelist = BsonImageList()
     for key, value in dict_export.items():
         # Puxa arquivo .jpg
-        jpegfile = os.path.join(IMAGES_FOLDER, value['imagem'])
+        jpegfile = os.path.join(IMAGES_FOLDER, value['fonte'], value['imagem'])
         # print(jpegfile)
         try:
             bsonimage = BsonImage(filename=jpegfile, **value)
