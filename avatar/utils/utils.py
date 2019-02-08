@@ -98,7 +98,6 @@ def carregaarquivos(agendamento: Agendamento, session):
                     for tag in root.iter('Date'):
                         data = tag.text
                     if numero is None or data is None:
-                        erro = True
                         mensagem = \
                             mensagem + path_origem + \
                             ' XML inválido. ' + \

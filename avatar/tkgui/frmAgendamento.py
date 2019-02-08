@@ -57,7 +57,7 @@ class AgendamentoForm():
                 raise ValueError(self.edtDias.get() +
                                  'não é um número válido.')
             self.agendamento.mascarafiltro = self.edtMascara.get()
-            self.session.save(self.agendamento)
+            self.session.add(self.agendamento)
             self.session.commit()
             self.top.destroy()
             del self
