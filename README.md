@@ -15,6 +15,8 @@ Criação de executável
 > pyinstaller --onefile avatar/tkgui/avatar_gui.py
 
 > pyinstaller --onefile avatar/cli/avatar_cli.py
+
+> pyinstaller --onefile avatar/cli/avatar_upload_bson.py
 ```
 
 

@@ -124,8 +124,8 @@ def agendar(ctx, nome, data, mascara):
             return
         print(f'Criando agendamento de cópia de arquivos da Fonte de Imagens '
               f'{nome} a partir de {data} com a máscara {mascara}')
-        if len(fonte.agendamentos) > 0:
-            agendamento = fonte.agendamentos[0]
+        if fonte.agendamento:
+            agendamento = fonte.agendamento
             agendamento.mascarafiltro = mascara
             agendamento.proximocarregamento = proximocarregamento
         else:

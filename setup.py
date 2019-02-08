@@ -11,8 +11,10 @@ setup(
     packages=find_packages(),
     install_requires=[
         'click',
+        'celery',
         'pillow',
         'pymongo',
+        'requests',
         'sqlalchemy'
     ],
     tests_require=['pytest'],
