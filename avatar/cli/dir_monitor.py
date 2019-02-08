@@ -57,7 +57,7 @@ def login(username='ajna', senha='ajna'):
     ))
 
 
-def despacha(filename, target=API_URL, sync=SYNC):
+def despacha(filename, url=API_URL, sync=SYNC):
     """Envia por HTTP POST o arquivo especificado.
 
     Args:
@@ -74,7 +74,8 @@ def despacha(filename, target=API_URL, sync=SYNC):
     bson = open(filename, 'rb')
     files = {'file': bson}
     # login()
-    rv = requests.post(target, files=files, data={'sync': sync})
+    print('Enviando BSON %s para %s' % (filename, url))
+    rv = requests.post(url, files=files, data={'sync': sync})
     if rv is None:
         return False, None
     try:
@@ -109,12 +110,13 @@ def despacha_dir(dir=BSON_DIR, url=API_URL, sync=SYNC):
     for filename in os.listdir(dir)[:90]:
         try:
             bsonfile = os.path.join(dir, filename)
-            success, response = despacha(bsonfile, url, sync)
+            success, response = despacha(bsonfile,
+                                         url + '/api/uploadbson', sync)
             if success:
                 # TODO: save on database list of files to delete
                 #  (if light goes out or system fail, continue)
                 response_json = response.json()
-                if (platform == 'win32') or sync:
+                if sync:
                     if response_json.get('success', False) is True:
                         os.remove(bsonfile)
                         print('Arquivo ' + bsonfile + ' removido.')
@@ -160,8 +162,8 @@ def espera_resposta(api_url, bson_file, sleep_time=10, timeout=180):
             time.sleep(sleep_time)
             if time.time() - enter_time >= timeout:
                 print('Timeout ao esperar resultado de processamento ' +
-                             'Funcao: espera_resposta' +
-                             ' Arquivo: ' + bson_file)
+                      'Funcao: espera_resposta' +
+                      ' Arquivo: ' + bson_file)
                 return False
             rv = requests.get(api_url)
             if rv and rv.status_code == 200:
