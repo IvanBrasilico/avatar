@@ -27,7 +27,7 @@ class MySession():
         if arquivo is None:
             path = ':memory:'
         else:
-            path = os.path.join('.', arquivo)
+            path = os.path.join(os.getcwd(), arquivo)
             print('***Banco de Dados...', path)
             if os.name != 'nt':
                 path = '/' + path
@@ -78,7 +78,7 @@ class FonteImagem(Base):
     def proximo_agendamento(self, session):
         return session.query(Agendamento).filter(
             Agendamento.fonte_id == self.id,
-            Agendamento.proximocarregamento > datetime.now()
+            Agendamento.proximocarregamento < datetime.now()
         ).first()
 
     @classmethod
@@ -178,7 +178,7 @@ class Agendamento(Base):
     @classmethod
     def agendamentos_programados(cls, session):
         return session.query(Agendamento).filter(
-            Agendamento.proximocarregamento < datetime.now()
+            Agendamento.proximocarregamento > datetime.now()
         ).all()
 
     def __str__(self):

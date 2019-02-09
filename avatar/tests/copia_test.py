@@ -24,15 +24,15 @@ from avatar.utils.utils import (carregaarquivos, exporta_bson,
                                 trata_agendamentos)
 
 DATA = datetime.datetime(2018, 8, 29)
-CAMINHO = r'avatar\tests\images'
-JPEG_DESTINO = 'avatar/tests/images/D/2018/08/29/MSKU01/msku01fake_stamp.jpg'
+CAMINHO = os.path.join('avatar', 'tests', 'images')
+JPEG_DESTINO = os.path.join('avatar', 'tests', 'images', 'D', '2018', '08', '29', 'MSKU01', 'msku01fake_stamp.jpg')
 
 
 class CopiaTest(BaseModelTest):
 
     def cria_fonte_agendamento(self, nome: str):
         fonte = FonteImagem(nome, os.path.join(CAMINHO, nome))
-        agendamento = Agendamento('%Y\%m\%d', fonte, DATA)
+        agendamento = Agendamento('%Y/%m/%d', fonte, DATA)
         self.session.add(fonte)
         self.session.add(agendamento)
         self.session.commit()
@@ -61,7 +61,7 @@ class CopiaTest(BaseModelTest):
         mensagem, erro = carregaarquivos(agendamento, self.session)
         try:
             assert os.path.exists(JPEG_DESTINO)
-            shutil.rmtree('images/D')
+            shutil.rmtree(os.path.join('images', 'D'))
         except FileNotFoundError:
             assert False
         assert mensagem == ''
@@ -71,7 +71,7 @@ class CopiaTest(BaseModelTest):
         agendamento = self.cria_fonte_agendamento('E')
         mensagem, erro = carregaarquivos(agendamento, self.session)
         try:
-            shutil.rmtree('images/E')
+            shutil.rmtree(os.path.join('images', 'E'))
         except FileNotFoundError:
             assert False
         assert mensagem == ''
@@ -88,7 +88,7 @@ class CopiaTest(BaseModelTest):
         exportados, name, qtde = exporta_bson(self.session, 1)
         try:
             assert os.path.exists(JPEG_DESTINO)
-            shutil.rmtree('images/D')
+            shutil.rmtree(os.path.join('images', 'D'))
             print(exportados, name, qtde)
             assert os.path.exists(name)
             os.remove(name)

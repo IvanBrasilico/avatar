@@ -10,12 +10,12 @@ class AgendamentoForm():
 
     def __init__(self, main, fonte):
         print(fonte)
+        self.agendamento = None
         self.main = main
         self.session = main.session
         self.fonte = fonte
         self.top = tk.Toplevel()
         self.cria_form()
-        self.agendamento = None
 
     def cria_form(self):
         self.top.title('Agendamento')

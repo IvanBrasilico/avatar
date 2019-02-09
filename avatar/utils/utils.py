@@ -84,7 +84,7 @@ def carregaarquivos(agendamento: Agendamento, session):
                     except ParseError as err:
                         erro = True
                         mensagem = \
-                            mensagem + path_origem + \
+                            mensagem + path_origem + f + \
                             ' XML inválido. ' + str(err) + '\n'
                         continue
 
@@ -99,7 +99,7 @@ def carregaarquivos(agendamento: Agendamento, session):
                         data = tag.text
                     if numero is None or data is None:
                         mensagem = \
-                            mensagem + path_origem + \
+                            mensagem + path_origem + f + \
                             ' XML inválido. ' + \
                             'XML deve conter chaves ContainerId e Date.'
                         continue
@@ -270,10 +270,10 @@ def exporta_bson(session, batch_size: int = BSON_BATCH_SIZE):
             os.mkdir(BSON_DEST_PATH)
         bson_file_name = os.path.join(BSON_DEST_PATH, name + '_list.bson')
         bsonimagelist.tofile(bson_file_name)
-        logger.warning(f'{qtde} arquivos exportados para {bson_file_name}')
+        logger.warning(f'{batch_size} arquivos exportados para {bson_file_name}')
     except Exception as err:
         session.rollback()
         logger.warning(err)
     s5 = time.time()
     logger.info(f'EXPORTA BSON-Bson salvo em {s5 - s4} segundos')
-    return dict_export, bson_file_name, qtde
+    return dict_export, bson_file_name, batch_size

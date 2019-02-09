@@ -38,7 +38,7 @@ class FonteForm():
                                                    self.edtNome.get(),
                                                    self.edtCaminho.get())
             self.main.update_fontes()
-            messagebox.showinfo('FonteImagem', msg)
+            # messagebox.showinfo('FonteImagem', msg)
             self.top.destroy()
             del self
         except Exception as err:

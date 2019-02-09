@@ -8,7 +8,8 @@ from threading import Thread
 
 from avatar.models.models import FonteImagem, MySession
 from avatar.tkgui.frmFonte import FonteForm
-from avatar.utils.utils import (exporta_bson,
+from avatar.utils.utils import (BSON_BATCH_SIZE,
+                                exporta_bson,
                                 trata_agendamentos)
 from avatar.utils.logconf import logger
 from logging import DEBUG
@@ -72,8 +73,8 @@ class Application(tk.Frame):
     def update_fontes(self):
         self.listbox.delete(0, tk.END)
         fontes = self.session.query(FonteImagem).all()
-        for fonte in fontes:
-            self.listbox.insert(tk.END, fonte.nome)
+        for afonte in fontes:
+            self.listbox.insert(tk.END, afonte.nome)
 
     def get_fonte(self):
         select = self.listbox.curselection()
@@ -110,9 +111,14 @@ class Application(tk.Frame):
             messagebox.showinfo('Trata agendamentos', mensagem)
 
     def exporta_bson(self):
-        _, name, qtde = exporta_bson(session=self.session, batch_size=1000)
-        messagebox.showinfo('Exporta BSON',
+        _, name, qtde = exporta_bson(session=self.session)
+        if name:
+            messagebox.showinfo('Exporta BSON',
                             f'{qtde} arquivos exportados. {name}')
+        else:
+            messagebox.showinfo('Exporta BSON',
+                            f'Somente {qtde} arquivos disponíveis. Mínimo {BSON_BATCH_SIZE}.')
+
 
     def ver_log(self):
         os.startfile('avatar.log')

@@ -14,7 +14,7 @@ import os
 import click
 
 
-from avatar.cli.dir_monitor import despacha_dir
+from utils.dir_monitor import despacha_dir
 
 BSON_DIR = os.path.join('.', 'bson')
 VIRASANA_URL = 'http://10.68.64.12/virasana/'
@@ -23,7 +23,7 @@ VIRASANA_URL = 'http://10.68.64.12/virasana/'
 @click.option('--dir', default=BSON_DIR,
               help='diretório a processar - padrão %s ' % BSON_DIR)
 @click.option('--url', default=VIRASANA_URL,
-              help='URL do Servidor - padrão %s ' % BSON_DIR)
+              help='URL do Servidor - padrão %s ' % VIRASANA_URL)
 @click.option('--sync', is_flag=True,
               help='Fazer consulta de forma síncrona')
 def carrega(dir, url, sync):
