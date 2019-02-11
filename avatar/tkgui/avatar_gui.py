@@ -14,7 +14,7 @@ from avatar.utils.utils import (BSON_BATCH_SIZE,
 from avatar.utils.logconf import logger
 from logging import DEBUG
 
-LOTE = 1
+LOTE = BSON_BATCH_SIZE
 INTERVALO = 30
 
 
