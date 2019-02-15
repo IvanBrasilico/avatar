@@ -30,6 +30,28 @@ except FileNotFoundError:
     logger.warning('Crie arquivo unidade.txt para configurar')
 
 
+tags_numero = ['ContainerId', 'container_no', 'ContainerID1']
+tags_data = ['Date', 'SCANTIME', 'ScanTime']
+def get_numero_data(root):
+    numero = None
+    data = None
+    for atag in tags_numero:
+        for tag in root.iter(atag):
+            lnumero = tag.text
+            if lnumero is not None:
+                logger.debug(f'carregaarquivos - numero-{lnumero}')
+                numero = lnumero.replace('?', 'X')
+                break
+
+    for atag in tags_data:
+        for tag in root.iter(atag):
+            data = tag.text
+            if data is not None:
+                break
+
+    return numero, data
+
+
 def carregaarquivos(agendamento: Agendamento, session):
     """Copia arquivos do caminho na Fonte.
 
@@ -61,8 +83,12 @@ def carregaarquivos(agendamento: Agendamento, session):
         try:
             lista_dir = [dir for dir in os.listdir(path_origem)
                          if os.path.isdir(os.path.join(path_origem, dir))]
-        except Exception as err:
+        except FileNotFoundError as err:
             logger.warning(err)
+            mensagem = mensagem + path_origem + str(err)
+            return mensagem, False
+        except Exception as err:
+            logger.error(err)
             mensagem = mensagem + path_origem + str(err)
             return mensagem, True
         logger.debug(lista_dir)
@@ -84,22 +110,13 @@ def carregaarquivos(agendamento: Agendamento, session):
                     except ParseError as err:
                         erro = True
                         mensagem = \
-                            mensagem + path_origem + f + \
+                            mensagem + os.path.join(dirpath, f) + \
                             ' XML inválido. ' + str(err) + '\n'
                         continue
-
-                    numero = None
-                    data = None
-                    for tag in root.iter('ContainerId'):
-                        lnumero = tag.text
-                        if lnumero is not None:
-                            logger.debug(f'carregaarquivos - numero-{lnumero}')
-                            numero = lnumero.replace('?', 'X')
-                    for tag in root.iter('Date'):
-                        data = tag.text
+                    numero, data = get_numero_data(root)
                     if numero is None or data is None:
                         mensagem = \
-                            mensagem + path_origem + f + \
+                            mensagem + os.path.join(dirpath, f) + \
                             ' XML inválido. ' + \
                             'XML deve conter chaves ContainerId e Date.'
                         continue
@@ -121,11 +138,18 @@ def carregaarquivos(agendamento: Agendamento, session):
                     destparcial = os.path.join(ano, mes, dia, numero)
                     destcompleto = os.path.join(path_destino, destparcial)
                     logger.debug(f'destcompleto {destcompleto}')
-                    lista_jpg = glob.glob(os.path.join(dirpath, '*mp.jpg'))
+                    lista_jpg = []
+                    extensoes = ['*mp.jpg', '*thumbxray.jpg', '*icon.jpg']
+                    for extensao in extensoes:
+                        lista_jpg = glob.glob(os.path.join(dirpath, extensao))
+                        if len(lista_jpg) > 0:
+                            break
                     if len(lista_jpg) == 0:
                         erro = True
-                        mensagem = mensagem + destcompleto + \
-                                   ' Imagem não encontrada.\n'
+                        mensagem = mensagem + dirpath + \
+                                   ' Imagens (*mp.jpg) não' + \
+                                   ' encontradas no caminho.\n'
+                        logger.debug('**** numero %s *** data %s' % (numero, data))
                         continue
                     try:
                         os.makedirs(destcompleto)
@@ -141,13 +165,19 @@ def carregaarquivos(agendamento: Agendamento, session):
                         copyfile(file, os.path.join(destcompleto, name))
                         c = ConteinerEscaneado(numero, fonteimagem)
                         c.arqimagemoriginal = destparcial + '/' + name
-                        c.pub_date = datetime(int(ano), int(mes), int(dia))
                         mdate = datetime.fromtimestamp(time.mktime(
                             time.localtime(os.path.getmtime(file))))
                         cdate = datetime.fromtimestamp(time.mktime(
                             time.localtime(os.path.getctime(file))))
                         c.file_mdate = mdate
                         c.file_cdate = cdate
+                        try:
+                            c.pub_date = datetime.strptime(data, '%Y-%m-%d_%H-%M-%S')
+                            # datetime(int(ano), int(mes), int(dia))
+                        except ValueError as err:
+                            c.pub_date = c.file_cdate
+                            logger.debug(err)
+
                         logger.debug(f'{c.pub_date}, {c.file_mdate},'
                                      f' {c.file_cdate}')
                         c.truckid = truckid
@@ -188,11 +218,14 @@ def trata_agendamentos(session):
             else:
                 logger.info(mensagem)
             if not erro:
-                ag.proximocarregamento = \
-                    ag.proximocarregamento + \
-                    timedelta(days=ag.diaspararepetir)
-                session.add(ag)
-                session.commit()
+                # Se já passou um dia da data de agendamento, atualiza para dia seguinte
+                # Senão, continua puxando o mesmo dia.
+                if datetime.now() - ag.proximocarregamento > timedelta(days=1):
+                    ag.proximocarregamento = \
+                        ag.proximocarregamento + \
+                        timedelta(days=ag.diaspararepetir)
+                    session.add(ag)
+                    session.commit()
         return mensagem, erro
     else:
         logger.warning('trata_agendamentos: '
@@ -210,8 +243,8 @@ def exporta_bson(session, batch_size: int = BSON_BATCH_SIZE):
                        'Abortando exporta_bson.')
         return {}, '', qtde
     dict_export = {}
-    start = nao_exportados[0].pub_date
-    end = nao_exportados[batch_size - 1].pub_date
+    start = nao_exportados[0].file_cdate
+    end = nao_exportados[batch_size - 1].file_cdate
     s1 = time.time()
     logger.info(f'EXPORTA BSON-Consulta no banco durou {s1 - s0}segundos')
     for containerescaneado in nao_exportados:
@@ -223,7 +256,6 @@ def exporta_bson(session, batch_size: int = BSON_BATCH_SIZE):
             'id': UNIDADE + str(containerescaneado.id),
             'UNIDADE': UNIDADE,
             'idcov': str(containerescaneado.id),
-            'fonte': containerescaneado.fonte.nome,
             'imagem': imagem,
             'dataescaneamento': containerescaneado.pub_date,
             'criacaoarquivo': containerescaneado.file_cdate,
@@ -238,7 +270,7 @@ def exporta_bson(session, batch_size: int = BSON_BATCH_SIZE):
     bsonimagelist = BsonImageList()
     for key, value in dict_export.items():
         # Puxa arquivo .jpg
-        jpegfile = os.path.join(IMAGES_FOLDER, value['fonte'], value['imagem'])
+        jpegfile = os.path.join(IMAGES_FOLDER, value['recinto'], value['imagem'])
         # print(jpegfile)
         try:
             bsonimage = BsonImage(filename=jpegfile, **value)
@@ -262,18 +294,20 @@ def exporta_bson(session, batch_size: int = BSON_BATCH_SIZE):
     for containerescaneado in nao_exportados:
         containerescaneado.exportado = 1
         session.add(containerescaneado)
-    session.commit()
-    s4 = time.time()
-    logger.info(f'EXPORTA BSON-BD atualizado em {s4 - s3} segundos')
     try:
         if not os.path.exists(BSON_DEST_PATH):
             os.mkdir(BSON_DEST_PATH)
         bson_file_name = os.path.join(BSON_DEST_PATH, name + '_list.bson')
+        while os.path.exists(bson_file_name): # Nome de arquivo coincidiu!!!
+            bson_file_name = bson_file_name + 'E-'
         bsonimagelist.tofile(bson_file_name)
+        session.commit()
+        s4 = time.time()
+        logger.info(f'EXPORTA BSON-BD atualizado em {s4 - s3} segundos')
         logger.warning(f'{batch_size} arquivos exportados para {bson_file_name}')
     except Exception as err:
         session.rollback()
-        logger.warning(err)
+        logger.error(err)
     s5 = time.time()
     logger.info(f'EXPORTA BSON-Bson salvo em {s5 - s4} segundos')
     return dict_export, bson_file_name, batch_size

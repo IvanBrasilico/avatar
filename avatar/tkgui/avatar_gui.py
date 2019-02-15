@@ -12,7 +12,7 @@ from avatar.utils.utils import (BSON_BATCH_SIZE,
                                 exporta_bson,
                                 trata_agendamentos)
 from avatar.utils.logconf import logger
-from logging import DEBUG
+from logging import DEBUG, INFO
 
 LOTE = BSON_BATCH_SIZE
 INTERVALO = 30
@@ -169,6 +169,10 @@ class Application(tk.Frame):
 if '--debug' in sys.argv:
     print('Iniciando modo DEBUG')
     logger.setLevel(DEBUG)
+else:
+    print('Iniciando modo INFO')
+    logger.setLevel(INFO)
+
 mysession = MySession()
 root = tk.Tk()
 app = Application(mysession.session, master=root)
