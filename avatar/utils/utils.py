@@ -102,6 +102,8 @@ def carregaarquivos(agendamento: Agendamento, session):
         for result in glob.iglob(path_origem):
             for dirpath, dirnames, files in os.walk(result):
                 for f in fnmatch.filter(files, '*.xml'):
+                    if 'ocr.xml' in f:
+                        continue
                     logger.debug(f'carregaarquivos - f = {f}')
                     logger.debug(f'carregaarquivos - dir path = {dirpath}')
                     try:
@@ -271,7 +273,7 @@ def exporta_bson(session, batch_size: int = BSON_BATCH_SIZE):
     for key, value in dict_export.items():
         # Puxa arquivo .jpg
         jpegfile = os.path.join(IMAGES_FOLDER, value['recinto'], value['imagem'])
-        # print(jpegfile)
+        caminho = os.path.dirname(jpegfile)
         try:
             bsonimage = BsonImage(filename=jpegfile, **value)
             bsonimagelist.addBsonImage(bsonimage)
@@ -280,7 +282,13 @@ def exporta_bson(session, batch_size: int = BSON_BATCH_SIZE):
             logger.error(f'EXPORTA BSON-Ao exportar: {value["imagem"]}')
         # Puxa arquivo .xml
         try:
-            xmlfile = jpegfile.split('S_stamp')[0] + '.xml'
+            xmlfile = ''
+            lista_arquivos = os.listdir(caminho)
+            for arquivo in lista_arquivos:
+                if arquivo[-4:].lower() == '.xml':
+                    xmlfile = arquivo
+                    break
+            xmlfile = os.path.join(caminho, xmlfile)
             value['contentType'] = 'text/xml'
             bsonimage = BsonImage(filename=xmlfile, **value)
             bsonimagelist.addBsonImage(bsonimage)
