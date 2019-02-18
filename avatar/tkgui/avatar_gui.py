@@ -112,18 +112,22 @@ class Application(tk.Frame):
 
     def exporta_bson(self):
         total = 0
-        while True:
+        names = []
+        name = '<nome do arquivo>'
+        while name != '':
             _, name, qtde = exporta_bson(session=self.session)
-            total += qtde
-            if name == '':
-                messagebox.showinfo(
-                    'Exporta BSON',
-                    f'Somente {qtde} arquivos disponíveis. '
-                    'Mínimo {BSON_BATCH_SIZE}.'
-                )
-                break
-        messagebox.showinfo('Exporta BSON',
-                            f'{total} arquivos exportados. {name}')
+            if name != '':
+                total += qtde
+                names.append(name)
+        if len(names) == 0:
+            messagebox.showinfo(
+                'Exporta BSON',
+                f'Somente {qtde} arquivos disponíveis. '
+                f'Mínimo {BSON_BATCH_SIZE}.'
+            )
+        else:
+            messagebox.showinfo('Exporta BSON',
+                                f'{total} arquivos exportados. {name}')
 
     def ver_log(self):
         os.startfile('avatar.log')

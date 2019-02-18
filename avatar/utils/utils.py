@@ -13,25 +13,36 @@ from avatar.utils.bsonimage import BsonImage, BsonImageList
 from avatar.utils.logconf import logger
 
 # size = (256, 120)
-BSON_BATCH_SIZE = 400
 HOMEDIR = os.getcwd()
 IMAGES_FOLDER = os.path.join(HOMEDIR, 'images')
 BSON_DEST_PATH = os.path.join(HOMEDIR, 'bson')
 
-UNIDADE_CONF = os.path.join(HOMEDIR, 'unidade.txt')
+CONF_FILE = os.path.join(HOMEDIR, 'avatar.conf')
+avatar_conf = {}
 try:
-    with open(UNIDADE_CONF, 'r') as unidade_file:
-        UNIDADE = unidade_file.readline()
-except FileNotFoundError:
-    UNIDADE = 'ALFSTS'
-    logger.warning(f'HOMEDIR: {HOMEDIR}')
-    logger.warning('Arquivo de configuração não encontrado. '
-                   'Usando Unidade "ALFSTS".')
-    logger.warning('Crie arquivo unidade.txt para configurar')
-
+    with open(CONF_FILE, 'r') as conf_file:
+        for line in conf_file.readlines():
+            line_split = line.split('=')
+            avatar_conf[line_split[0]] = line_split[1]
+    BSON_BATCH_SIZE = avatar_conf.get('BSON_BATCH_SIZE')
+    if BSON_BATCH_SIZE is None:
+        BSON_BATCH_SIZE = 1000
+    else:
+        BSON_BATCH_SIZE = int(BSON_BATCH_SIZE)
+    UNIDADE = avatar_conf.get('UNIDADE')
+    if UNIDADE is None:
+        UNIDADE = 'ALFSTS'
+except FileNotFoundError as err:
+    logger.error(f'HOMEDIR: {HOMEDIR}')
+    logger.error('Arquivo de configuração não encontrado. '
+                 'Usando Unidade "ALFSTS".')
+    logger.error('Crie arquivo avatar.conf para configurar')
+    raise err
 
 tags_numero = ['ContainerId', 'container_no', 'ContainerID1']
 tags_data = ['Date', 'SCANTIME', 'ScanTime']
+
+
 def get_numero_data(root):
     numero = None
     data = None
@@ -306,7 +317,7 @@ def exporta_bson(session, batch_size: int = BSON_BATCH_SIZE):
         if not os.path.exists(BSON_DEST_PATH):
             os.mkdir(BSON_DEST_PATH)
         bson_file_name = os.path.join(BSON_DEST_PATH, name + '_list.bson')
-        while os.path.exists(bson_file_name): # Nome de arquivo coincidiu!!!
+        while os.path.exists(bson_file_name):  # Nome de arquivo coincidiu!!!
             bson_file_name = bson_file_name + 'E-'
         bsonimagelist.tofile(bson_file_name)
         session.commit()
