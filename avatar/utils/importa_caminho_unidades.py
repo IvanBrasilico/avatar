@@ -5,7 +5,7 @@ from datetime import datetime
 drives = win32api.GetLogicalDriveStrings()
 drives = drives.split('\000')[:-1]
 print(drives)
-
+print(str(datetime.now().year))
 for drive in drives:
     print(drive)
     for dir in os.listdir(drive):

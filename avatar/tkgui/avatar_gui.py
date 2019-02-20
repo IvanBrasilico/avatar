@@ -3,12 +3,13 @@ import time
 import tkinter as tk
 import os
 import sys
+from datetime import datetime
 from tkinter import messagebox
 from threading import Thread
 
-from avatar.models.models import FonteImagem, MySession
+from avatar.models.models import Agendamento, FonteImagem, MySession
 from avatar.tkgui.frmFonte import FonteForm
-from avatar.utils.dir_utils import pega_letras, detecta_mascara
+from avatar.utils.dir_utils import pega_fontes, detecta_mascara
 from avatar.utils.utils import (BSON_BATCH_SIZE,
                                 exporta_bson,
                                 trata_agendamentos)
@@ -66,8 +67,8 @@ class Application(tk.Frame):
                                   width=BTN_WIDTH)
         self.btnStats.pack(side='top')
         self.btnVarrer = tk.Button(self, text='Varrer Letras',
-                                 command=self.varrer_letras,
-                                 width=BTN_WIDTH)
+                                   command=self.varrer_letras,
+                                   width=BTN_WIDTH)
         self.btnVarrer.pack(side='top')
         self.btnQuit = tk.Button(self, text='Sair',
                                  command=self._close,
@@ -179,7 +180,6 @@ class Application(tk.Frame):
                        str(fonte.proximo_agendamento(self.session)) + '\n'
         messagebox.showinfo('Stats', mensagem)
 
-
     def varrer_letras(self):
         """Adciona fontes e agendamentos automaticamente.
 
@@ -187,7 +187,20 @@ class Application(tk.Frame):
         existem fontes nessas letras. Então, adiciona.
 
         """
-        pega_letras()
+        caminhos_detectados = (pega_fontes())
+        caminhos_cadastrados = (fonte.caminho for fonte in
+                                self.session.query(FonteImagem).all())
+        caminhos_novos = caminhos_detectados - caminhos_cadastrados
+        for caminho in caminhos_novos:
+            mascara = detecta_mascara(caminho)
+            fonte = FonteImagem(caminho, caminho)
+            fonte.pub_date = datetime.now()
+            self.session.add(fonte)
+            self.session.commit()
+            agendamento = Agendamento(mascara, fonte, fonte.pub_date, 1)
+            self.session.add(agendamento)
+            self.session.commit()
+
 
 if '--debug' in sys.argv:
     print('Iniciando modo DEBUG')
