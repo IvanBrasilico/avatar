@@ -19,11 +19,11 @@ LOGFILEMAXBYTES = 10000
 def init_log():
     # Log em arquivo
     logrotatefile = RotatingFileHandler('avatar.log', maxBytes=LOGFILEMAXBYTES)
-    logrotatefile.setLevel(logging.INFO)
+    logrotatefile.setLevel(logging.DEBUG)
 
     # Log em stdout
     console = logging.StreamHandler()
-    console.setLevel(logging.WARNING)
+    console.setLevel(logging.DEBUG)
 
     # Formatação dos logs
     formatter = logging.Formatter(

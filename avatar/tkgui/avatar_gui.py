@@ -62,8 +62,8 @@ class Application(tk.Frame):
         self.btnDaemon['command'] = self.daemon_toggle
         self.btnDaemon.pack(side='top')
         self.btnStats = tk.Button(self, text='Estatísticas',
-                                 command=self.stats,
-                                 width=BTN_WIDTH)
+                                  command=self.stats,
+                                  width=BTN_WIDTH)
         self.btnStats.pack(side='top')
         self.btnVarrer = tk.Button(self, text='Varrer Letras',
                                  command=self.varrer_letras,
@@ -116,14 +116,23 @@ class Application(tk.Frame):
             messagebox.showinfo('Trata agendamentos', mensagem)
 
     def exporta_bson(self):
-        _, name, qtde = exporta_bson(session=self.session)
-        if name:
-            messagebox.showinfo('Exporta BSON',
-                            f'{qtde} arquivos exportados. {name}')
+        total = 0
+        names = []
+        name = '<nome do arquivo>'
+        while name != '':
+            _, name, qtde = exporta_bson(session=self.session)
+            if name != '':
+                total += qtde
+                names.append(name)
+        if len(names) == 0:
+            messagebox.showinfo(
+                'Exporta BSON',
+                f'Somente {qtde} arquivos disponíveis. '
+                f'Mínimo {BSON_BATCH_SIZE}.'
+            )
         else:
             messagebox.showinfo('Exporta BSON',
-                            f'Somente {qtde} arquivos disponíveis. Mínimo {BSON_BATCH_SIZE}.')
-
+                                f'{total} arquivos exportados. {name}')
 
     def ver_log(self):
         os.startfile('avatar.log')

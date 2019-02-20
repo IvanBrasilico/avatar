@@ -8,6 +8,8 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, scoped_session, sessionmaker
 from sqlalchemy.ext import baked
 
+from avatar.utils.logconf import logger
+
 Base = declarative_base()
 
 

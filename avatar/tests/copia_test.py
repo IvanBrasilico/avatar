@@ -54,7 +54,7 @@ class CopiaTest(BaseModelTest):
         agendamento = self.cria_fonte_agendamento('C')
         mensagem, erro = carregaarquivos(agendamento, self.session)
         assert erro is True
-        assert 'Imagem não encontrada' in mensagem
+        assert 'Imagens (*mp.jpg) não encontradas' in mensagem
 
     def test_D(self):
         agendamento = self.cria_fonte_agendamento('D')
