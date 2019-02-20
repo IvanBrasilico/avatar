@@ -4,7 +4,8 @@ from datetime import datetime
 from tkinter import messagebox
 
 from avatar.models.models import Agendamento
-
+from avatar.utils.utils import trata_agendamentos
+from avatar.utils.dir_utils import detecta_mascara
 
 class AgendamentoForm():
 
@@ -30,8 +31,12 @@ class AgendamentoForm():
         self.edtDias.grid(row=2, column=1)
         tk.Button(self.top, text='Fechar', command=self.top.destroy).grid(
             row=3, column=0, sticky=tk.W, pady=4)
-        tk.Button(self.top, text='Salvar', command=self.save).grid(
+        tk.Button(self.top, text='Salvar', command=self.save_and_close).grid(
             row=3, column=1, sticky=tk.W, pady=4)
+        tk.Button(self.top, text='Detectar', command=self.detect).grid(
+            row=3, column=2, sticky=tk.W, pady=4)
+        tk.Button(self.top, text='Rodar', command=self.run).grid(
+            row=3, column=3, sticky=tk.W, pady=4)
         if self.fonte.agendamento:
             agendamento = self.fonte.agendamento
             self.edtProximo.insert(10, agendamento.get_proximocarregamento_fmt())
@@ -59,7 +64,30 @@ class AgendamentoForm():
             self.agendamento.mascarafiltro = self.edtMascara.get()
             self.session.add(self.agendamento)
             self.session.commit()
-            self.top.destroy()
-            del self
+            return True
         except Exception as err:
             messagebox.showerror('Erro!', str(err))
+            return False
+
+
+    def save_and_close(self):
+        if self.save():
+            self.top.destroy()
+            del self
+
+    def state_ok(self):
+        state_ok = True
+        if not self.agendamento:
+            state_ok = self.save()
+        return state_ok
+
+    def run(self):
+        if self.state_ok() is True:
+            mensagem, erro = trata_agendamentos(self.session, self.agendamento)
+            if erro:
+                messagebox.showerror('Trata agendamentos', mensagem)
+            else:
+                messagebox.showinfo('Trata agendamentos', mensagem)
+
+    def detecta(self):
+        self.edtMascara = detecta_mascara(self.fonte.caminho)

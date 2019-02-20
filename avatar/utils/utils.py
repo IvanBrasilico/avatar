@@ -168,7 +168,7 @@ def carregaarquivos(agendamento: Agendamento, session):
     return mensagem, erro
 
 
-def trata_agendamentos(session):
+def trata_agendamentos(session, agendamento=None):
     """Consulta agendamentos pendentes e executa carregaarquivos.
 
     Consulta agendamentos pendentes e executa carregaarquivos,
@@ -177,7 +177,10 @@ def trata_agendamentos(session):
     Returns:
         Mensagem de status, erro (True ou False)
     """
-    lista_agendamentos = Agendamento.agendamentos_pendentes(session)
+    if agendamento is None:
+        lista_agendamentos = Agendamento.agendamentos_pendentes(session)
+    else:
+        lista_agendamentos = [agendamento]
     if len(lista_agendamentos) > 0:
         logger.info(f'Processando agendamentos encontrados!!!')
         for ag in lista_agendamentos:

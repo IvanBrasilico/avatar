@@ -8,11 +8,12 @@ from threading import Thread
 
 from avatar.models.models import FonteImagem, MySession
 from avatar.tkgui.frmFonte import FonteForm
+from avatar.utils.dir_utils import pega_letras, detecta_mascara
 from avatar.utils.utils import (BSON_BATCH_SIZE,
                                 exporta_bson,
                                 trata_agendamentos)
 from avatar.utils.logconf import logger
-from logging import DEBUG
+from logging import DEBUG, INFO
 
 LOTE = BSON_BATCH_SIZE
 INTERVALO = 30
@@ -64,6 +65,10 @@ class Application(tk.Frame):
                                  command=self.stats,
                                  width=BTN_WIDTH)
         self.btnStats.pack(side='top')
+        self.btnVarrer = tk.Button(self, text='Varrer Letras',
+                                 command=self.varrer_letras,
+                                 width=BTN_WIDTH)
+        self.btnVarrer.pack(side='top')
         self.btnQuit = tk.Button(self, text='Sair',
                                  command=self._close,
                                  width=BTN_WIDTH)
@@ -166,9 +171,23 @@ class Application(tk.Frame):
         messagebox.showinfo('Stats', mensagem)
 
 
+    def varrer_letras(self):
+        """Adciona fontes e agendamentos automaticamente.
+
+        Recupera letras de drives, vê se são caminhos ativos e se não
+        existem fontes nessas letras. Então, adiciona.
+
+        """
+        pega_letras()
+
 if '--debug' in sys.argv:
     print('Iniciando modo DEBUG')
     logger.setLevel(DEBUG)
+
+if '--info' in sys.argv or '-v' in sys.argv:
+    print('Iniciando modo Verboso...')
+    logger.setLevel(INFO)
+
 mysession = MySession()
 root = tk.Tk()
 app = Application(mysession.session, master=root)
