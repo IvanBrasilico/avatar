@@ -167,6 +167,8 @@ def carregaarquivos(agendamento: Agendamento, session):
                     try:
                         os.makedirs(destcompleto)
                     except FileExistsError as e:
+                        # TODO: comparar arquivos, caso cdate ou MD5 sejam
+                        # diferente, copiar com nome modificado!!!!
                         mensagem = mensagem + \
                                    destcompleto + ' já existente. - pulando\n'
                         continue
