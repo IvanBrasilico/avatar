@@ -10,6 +10,9 @@ BSON_DEST_PATH = os.path.join(HOMEDIR, 'bson')
 TAGS_NUMERO = ['ContainerId', 'container_no', 'ContainerID1']
 TAGS_DATA = ['Date', 'SCANTIME', 'ScanTime']
 
+BSON_DIR = os.path.join('.', 'bson')
+VIRASANA_URL = 'http://10.68.64.12/virasana/'
+
 CONF_FILE = os.path.join(HOMEDIR, 'avatar.conf')
 avatar_conf = {}
 try:
@@ -31,6 +34,13 @@ try:
     INTERVALO = avatar_conf.get('INTERVALO')
     if INTERVALO is None:
         INTERVALO = 30
+    BSON_DIR = avatar_conf.get('BSON_DIR')
+    if BSON_DIR is None:
+        BSON_DIR = os.path.join('.', 'bson')
+    VIRASANA_URL = avatar_conf.get('VIRASANA_URL')
+    if VIRASANA_URL is None:
+        VIRASANA_URL = 'http://10.68.64.12/virasana/'
+
 except FileNotFoundError as err:
     logger.error(f'HOMEDIR: {HOMEDIR}')
     logger.error('Arquivo de configuração não encontrado. '

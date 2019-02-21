@@ -89,7 +89,7 @@ def copia(ctx, nome, data):
         except ValueError:
             print('Formato de data inválido. Formato correto AAAA-MM-DD.')
             return
-        agendamento = Agendamento('%Y\%m\%d', fonte, proximocarregamento)
+        agendamento = Agendamento('%Y\\%m\\%d', fonte, proximocarregamento)
         print(f'Iniciando cópia de arquivos da Fonte de Imagens {nome}'
               f' a partir de {data}')
         mensagem, erro = carregaarquivos(agendamento.processamascara(),
@@ -99,13 +99,13 @@ def copia(ctx, nome, data):
         else:
             logger.info(mensagem)
     except NoResultFound as err:
-        print(f'Fonte "{nome}" não encontrada')
+        print(f'Fonte "{nome}" não encontrada. Erro {err}')
 
 
 @cli.command()
 @click.option('--nome', prompt=True, help='Nome da fonte de imagens (Recinto)')
 @click.option('--data', prompt=True, help='Data a copiar')
-@click.option('--mascara', default='%Y\%m\%d',
+@click.option('--mascara', default='%Y\\%m\\%d',
               help='Máscara (%Y/%m/%d) do caminho')
 @click.pass_obj
 def agendar(ctx, nome, data, mascara):
@@ -138,7 +138,7 @@ def agendar(ctx, nome, data, mascara):
             session.rollback()
             print(f'ERRRO! Provável chave duplicada \n{err}')
     except NoResultFound as err:
-        print(f'Fonte "{nome}" não encontrada')
+        print(f'Fonte "{nome}" não encontrada. Erro: {err}')
 
 
 @cli.command()

@@ -1,12 +1,14 @@
-import win32api
+import sys
 import os
 from datetime import datetime
 
-drives = win32api.GetLogicalDriveStrings()
+if sys.platform == 'win32':
+    import win32api
+    drives = win32api.GetLogicalDriveStrings()
+    drives = drives.split('\000')[:-1]
+else:
+    drives = []
 
-drives = drives.split('\000')[:-1]
-print(drives)
-print(str(datetime.now().year))
 for drive in drives:
     print(drive)
     for dir in os.listdir(drive):

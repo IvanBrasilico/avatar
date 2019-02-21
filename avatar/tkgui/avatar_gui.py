@@ -171,9 +171,9 @@ class Application(tk.Frame):
             mensagem = mensagem + fonte.nome + '\n'
             mensagem = mensagem + fonte.caminho + '\n'
             mensagem = mensagem + 'Contêineres carregados no BD: ' + \
-                       str(fonte.total_imagens(self.session)) + '\n'
+                str(fonte.total_imagens(self.session)) + '\n'
             mensagem = mensagem + 'Próximo agendamento: ' + \
-                       str(fonte.proximo_agendamento(self.session)) + '\n'
+                str(fonte.proximo_agendamento(self.session)) + '\n'
         messagebox.showinfo('Stats', mensagem)
 
     def varrer_letras(self):

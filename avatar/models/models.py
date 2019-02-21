@@ -1,14 +1,12 @@
-from datetime import datetime
 import os
+from datetime import datetime
 
 from sqlalchemy import (Column, DateTime, ForeignKey, Integer, String,
                         create_engine)
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.ext import baked
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, scoped_session, sessionmaker
-from sqlalchemy.ext import baked
-
-from avatar.utils.logconf import logger
 
 Base = declarative_base()
 
@@ -64,7 +62,8 @@ class FonteImagem(Base):
     caminho = Column(String(200), unique=True)
     pub_date = Column(DateTime)
     imagens = relationship('ConteinerEscaneado', back_populates='fonte')
-    agendamento = relationship('Agendamento', back_populates='fonte', uselist=False)
+    agendamento = relationship('Agendamento', back_populates='fonte',
+                               uselist=False)
 
     def __init__(self, nome: str, caminho: str):
         self.nome = nome
@@ -165,7 +164,8 @@ class Agendamento(Base):
             self.proximocarregamento = datetime.strptime(data,
                                                          '%Y-%m-%d %H:%M')
         except ValueError:
-            raise ValueError(data +
+            raise ValueError(
+                data +
                 'Formato de data inválido. Formato correto AAAA-MM-DD hh:mm')
 
     def get_proximocarregamento_fmt(self):
@@ -185,4 +185,4 @@ class Agendamento(Base):
 
     def __str__(self):
         return self.fonte.nome + ' ' + \
-               self.proximocarregamento.strftime('%Y-%m-%d %H:%M')
+            self.proximocarregamento.strftime('%Y-%m-%d %H:%M')

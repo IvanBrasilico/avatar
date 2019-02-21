@@ -20,7 +20,7 @@ import requests
 from celery import states
 from avatar.utils.logconf import logger
 
-VIRASANA_URL = "http://localhost:5001"
+VIRASANA_URL = 'http://localhost:5001'
 
 LOGIN_URL = VIRASANA_URL + '/login'
 API_URL = VIRASANA_URL + '/api/uploadbson'
@@ -81,7 +81,7 @@ def despacha(filename, url=API_URL, sync=SYNC):
     try:
         response_json = rv.json()
         success = response_json.get('success', False) and \
-                  (rv.status_code == requests.codes.ok)
+            (rv.status_code == requests.codes.ok)
     except json.decoder.JSONDecodeError as err:
         logger.error(err, exc_info=True)
         success = False

@@ -18,14 +18,15 @@ import os
 import shutil
 import unittest
 
-from avatar.tests.base_models_test import BaseModelTest
 from avatar.models.models import (Agendamento, FonteImagem)
+from avatar.tests.base_models_test import BaseModelTest
 from avatar.utils.utils import (carregaarquivos, exporta_bson,
                                 trata_agendamentos)
 
 DATA = datetime.datetime(2018, 8, 29)
 CAMINHO = os.path.join('avatar', 'tests', 'images')
-JPEG_DESTINO = os.path.join('avatar', 'tests', 'images', 'D', '2018', '08', '29', 'MSKU01', 'msku01fake_stamp.jpg')
+JPEG_DESTINO = os.path.join('avatar', 'tests', 'images', 'D', '2018',
+                            '08', '29', 'MSKU01', 'msku01fake_stamp.jpg')
 
 
 class CopiaTest(BaseModelTest):

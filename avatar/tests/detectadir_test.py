@@ -11,6 +11,7 @@ A - diretório caminho %Y/#%m/#%d
 """
 import os
 import unittest
+import sys
 
 from avatar.utils.dir_utils import pega_letras, detecta_mascara
 
@@ -21,7 +22,8 @@ class CopiaTest(unittest.TestCase):
 
     def test_pegaletras(self):
         letras = pega_letras()
-        assert letras == ['C:', 'D:']
+        if sys.platform == 'win32':
+            assert letras == ['C:', 'D:']
 
     def test_A(self):
         mascara = detecta_mascara(os.path.join(CAMINHO, 'A'))

@@ -10,14 +10,11 @@ Args:
     --sync: Fazer upload de forma síncrona (True ou False)
 
 """
-import os
 import click
 
+from avatar.utils.conf import BSON_DIR, VIRASANA_URL
+from avatar.utils.dir_monitor import despacha_dir
 
-from utils.dir_monitor import despacha_dir
-
-BSON_DIR = os.path.join('.', 'bson')
-VIRASANA_URL = 'http://10.68.64.12/virasana/'
 
 @click.command()
 @click.option('--dir', default=BSON_DIR,

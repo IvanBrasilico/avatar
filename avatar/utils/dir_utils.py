@@ -1,5 +1,5 @@
 import os
-import win32api
+import sys
 from datetime import datetime
 
 ANO = str(datetime.now().year)
@@ -18,9 +18,13 @@ def pega_fontes():
                     continue
     return fontes
 
+
 def pega_letras():
-    drives = win32api.GetLogicalDriveStrings()
-    drives = [drive[:2] for drive in drives.split('\000')[:-1]]
+    drives = []
+    if sys.platform == 'win32':
+        import win32api
+        drives = win32api.GetLogicalDriveStrings()
+        drives = [drive[:2] for drive in drives.split('\000')[:-1]]
     return drives
 
 
@@ -65,7 +69,7 @@ def detecta(caminho: str, pastas: list):
     if mask_of_data(pasta) is not None:
         pastas.append(pasta)
         return detecta(caminho, pastas)
-    if len(pastas) > 0: # Achou o pote no fim do arco-íris
+    if len(pastas) > 0:  # Achou o pote no fim do arco-íris
         return formata_mascaras(pastas)
     raise ValueError('Caminho %s inválido para a função detecta_mascara!!!'
                      % caminho)

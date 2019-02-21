@@ -1,11 +1,11 @@
 import tkinter as tk
-
 from datetime import datetime
 from tkinter import messagebox
 
 from avatar.models.models import Agendamento
-from avatar.utils.utils import trata_agendamentos
 from avatar.utils.dir_utils import detecta_mascara
+from avatar.utils.utils import trata_agendamentos
+
 
 class AgendamentoForm():
 
@@ -39,14 +39,15 @@ class AgendamentoForm():
             row=3, column=3, sticky=tk.W, pady=4)
         if self.fonte.agendamento:
             agendamento = self.fonte.agendamento
-            self.edtProximo.insert(10, agendamento.get_proximocarregamento_fmt())
+            self.edtProximo.insert(10,
+                                   agendamento.get_proximocarregamento_fmt())
             self.edtMascara.insert(10, agendamento.mascarafiltro)
             self.edtDias.insert(10, agendamento.diaspararepetir)
             self.agendamento = agendamento
         else:
             self.edtProximo.insert(10,
                                    datetime.now().strftime('%Y-%m-%d %H:%M'))
-            self.edtMascara.insert(10, '%Y\%m\%d')
+            self.edtMascara.insert(10, '%Y\\%m\\%d')
             self.edtDias.insert(10, 1)
 
     def save(self):
@@ -68,7 +69,6 @@ class AgendamentoForm():
         except Exception as err:
             messagebox.showerror('Erro!', str(err))
             return False
-
 
     def save_and_close(self):
         if self.save():

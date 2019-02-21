@@ -1,19 +1,19 @@
-from datetime import datetime, timedelta
 import fnmatch
 import glob
 import os
 import time
 import xml.etree.ElementTree as ET
-from xml.etree.ElementTree import ParseError
+from datetime import datetime, timedelta
 from shutil import copyfile
+from xml.etree.ElementTree import ParseError
+
 from sqlalchemy.exc import IntegrityError
 
 from avatar.models.models import Agendamento, ConteinerEscaneado
 from avatar.utils.bsonimage import BsonImage, BsonImageList
-from avatar.utils.logconf import logger
-
 from avatar.utils.conf import BSON_BATCH_SIZE, BSON_DEST_PATH, EXTENSOES_JPG, \
     IMAGES_FOLDER, TAGS_DATA, TAGS_NUMERO, UNIDADE
+from avatar.utils.logconf import logger
 
 
 def get_numero_data(root):
@@ -43,13 +43,13 @@ def get_lista_jpgs(destcompleto, dirpath, mensagem):
             break
     if len(lista_jpg) == 0:
         mensagem = mensagem + dirpath + \
-                   ' Imagens %s não' % EXTENSOES_JPG + \
-                   ' encontradas no caminho.\n'
+            ' Imagens %s não' % EXTENSOES_JPG + \
+            ' encontradas no caminho.\n'
         logger.debug('**** destcompleto %s *** ' % destcompleto)
         return lista_jpg, mensagem
     try:
         os.makedirs(destcompleto)
-    except FileExistsError as e:
+    except FileExistsError:
         # TODO: comparar arquivos, caso cdate ou MD5 sejam
         # diferente, copiar com nome modificado!!!!
         lista_jpg2 = lista_jpg.copy()
@@ -61,7 +61,7 @@ def get_lista_jpgs(destcompleto, dirpath, mensagem):
             if cdate_destino == cdate_origem:
                 lista_jpg.remove(file)
                 mensagem = mensagem + \
-                           destcompleto_name + ' já existente. - pulando\n'
+                    destcompleto_name + ' já existente. - pulando\n'
     return lista_jpg, mensagem
 
 
@@ -110,7 +110,7 @@ def carregaarquivos(agendamento: Agendamento, session):
             logger.debug(f'Listagem de arquivos: {os.listdir(path_origem)}')
             logger.debug(f'Caminho: {path_origem}')
             mensagem = mensagem + path_origem + \
-                       ' retornou lista vazia!! Sem acesso? \n'
+                ' retornou lista vazia!! Sem acesso? \n'
             return mensagem, True
         for result in glob.iglob(path_origem):
             for dirpath, dirnames, files in os.walk(result):
@@ -153,7 +153,8 @@ def carregaarquivos(agendamento: Agendamento, session):
                     destparcial = os.path.join(ano, mes, dia, numero)
                     destcompleto = os.path.join(path_destino, destparcial)
                     logger.debug(f'destcompleto {destcompleto}')
-                    lista_jpg, mensagem = get_lista_jpgs(destcompleto, dirpath, mensagem)
+                    lista_jpg, mensagem = get_lista_jpgs(destcompleto,
+                                                         dirpath, mensagem)
                     # Copia XML
                     if len(lista_jpg) == 0:
                         continue
@@ -173,7 +174,8 @@ def carregaarquivos(agendamento: Agendamento, session):
                         c.file_mdate = mdate
                         c.file_cdate = cdate
                         try:
-                            c.pub_date = datetime.strptime(data, '%Y-%m-%d_%H-%M-%S')
+                            c.pub_date = datetime.strptime(data,
+                                                           '%Y-%m-%d_%H-%M-%S')
                             # datetime(int(ano), int(mes), int(dia))
                         except ValueError as err:
                             c.pub_date = c.file_cdate
@@ -190,7 +192,7 @@ def carregaarquivos(agendamento: Agendamento, session):
                         except IntegrityError:
                             erro = True
                             mensagem = mensagem + destparcial + numero + \
-                                       ' já cadastrado?!\n'
+                                ' já cadastrado?!\n'
     except Exception as err:
         raise (err)
         erro = True
@@ -221,7 +223,8 @@ def trata_agendamentos(session, agendamento=None):
             else:
                 logger.info(mensagem)
             if not erro:
-                # Se já passou um dia da data de agendamento, atualiza para dia seguinte
+                # Se já passou um dia da data de agendamento,
+                # atualiza para dia seguinte
                 # Senão, continua puxando o mesmo dia.
                 if datetime.now() - ag.proximocarregamento > timedelta(days=1):
                     ag.proximocarregamento = \
@@ -273,7 +276,8 @@ def exporta_bson(session, batch_size: int = BSON_BATCH_SIZE):
     bsonimagelist = BsonImageList()
     for key, value in dict_export.items():
         # Puxa arquivo .jpg
-        jpegfile = os.path.join(IMAGES_FOLDER, value['recinto'], value['imagem'])
+        jpegfile = os.path.join(IMAGES_FOLDER, value['recinto'],
+                                value['imagem'])
         caminho = os.path.dirname(jpegfile)
         try:
             bsonimage = BsonImage(filename=jpegfile, **value)
@@ -297,7 +301,7 @@ def exporta_bson(session, batch_size: int = BSON_BATCH_SIZE):
             logger.error(f'EXPORTA BSON-ERRO:{str(err)}')
             logger.error(f'EXPORTA BSON-Ao exportar: {xmlfile}')
     name = datetime.strftime(start, '%Y-%m-%d_%H-%M-%S') + '_' + \
-           datetime.strftime(end, '%Y-%m-%d_%H-%M-%S')
+        datetime.strftime(end, '%Y-%m-%d_%H-%M-%S')
     s3 = time.time()
     logger.info(f'EXPORTA BSON-Bson montado em {s3 - s2} segundos')
     for containerescaneado in nao_exportados:
@@ -312,8 +316,10 @@ def exporta_bson(session, batch_size: int = BSON_BATCH_SIZE):
         bsonimagelist.tofile(bson_file_name)
         session.commit()
         s4 = time.time()
-        logger.info(f'EXPORTA BSON-BD atualizado em {s4 - s3} segundos')
-        logger.warning(f'{batch_size} arquivos exportados para {bson_file_name}')
+        logger.info(
+            f'EXPORTA BSON-BD atualizado em {s4 - s3} segundos')
+        logger.warning(
+            f'{batch_size} arquivos exportados para {bson_file_name}')
     except Exception as err:
         session.rollback()
         logger.error(err)
