@@ -1,23 +1,19 @@
 """Interface gráfica para uso do Avatar."""
-import time
-import tkinter as tk
 import os
 import sys
+import time
+import tkinter as tk
 from datetime import datetime
-from tkinter import messagebox
+from logging import DEBUG, INFO
 from threading import Thread
+from tkinter import messagebox
 
 from avatar.models.models import Agendamento, FonteImagem, MySession
 from avatar.tkgui.frmFonte import FonteForm
+from avatar.utils.conf import BSON_BATCH_SIZE, INTERVALO
 from avatar.utils.dir_utils import pega_fontes, detecta_mascara
-from avatar.utils.utils import (BSON_BATCH_SIZE,
-                                exporta_bson,
-                                trata_agendamentos)
 from avatar.utils.logconf import logger
-from logging import DEBUG, INFO
-
-LOTE = BSON_BATCH_SIZE
-INTERVALO = 30
+from avatar.utils.utils import exporta_bson, trata_agendamentos
 
 
 class Application(tk.Frame):
@@ -156,9 +152,9 @@ class Application(tk.Frame):
             atual = time.time()
             if proximo < atual:  # Chegou a hora de rodar novamente
                 trata_agendamentos(threadsession.session)
-                exporta_bson(threadsession.session, LOTE)
+                exporta_bson(threadsession.session, BSON_BATCH_SIZE)
                 proximo = time.time() + INTERVALO * 60
-            time.sleep(1)
+            time.sleep(3)
 
     def _close(self):
         print('Encerrando...')

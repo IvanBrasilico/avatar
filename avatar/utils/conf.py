@@ -7,7 +7,6 @@ from avatar.utils.logconf import logger
 HOMEDIR = os.getcwd()
 IMAGES_FOLDER = os.path.join(HOMEDIR, 'images')
 BSON_DEST_PATH = os.path.join(HOMEDIR, 'bson')
-EXTENSOES = ['*mp.jpg', '*thumbxray.jpg', '*icon.jpg']
 TAGS_NUMERO = ['ContainerId', 'container_no', 'ContainerID1']
 TAGS_DATA = ['Date', 'SCANTIME', 'ScanTime']
 
@@ -29,6 +28,9 @@ try:
     EXTENSOES_JPG = avatar_conf.get('EXTENSOES_JPG')
     if EXTENSOES_JPG is None:
         EXTENSOES_JPG = ['*mp.jpg', '*thumbxray.jpg', '*icon.jpg']
+    INTERVALO = avatar_conf.get('INTERVALO')
+    if INTERVALO is None:
+        INTERVALO = 30
 except FileNotFoundError as err:
     logger.error(f'HOMEDIR: {HOMEDIR}')
     logger.error('Arquivo de configuração não encontrado. '
