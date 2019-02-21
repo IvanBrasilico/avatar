@@ -3,7 +3,7 @@ import os
 from datetime import datetime
 
 drives = win32api.GetLogicalDriveStrings()
-print(drives)
+
 drives = drives.split('\000')[:-1]
 print(drives)
 print(str(datetime.now().year))
