@@ -12,55 +12,57 @@ from avatar.models.models import Agendamento, ConteinerEscaneado
 from avatar.utils.bsonimage import BsonImage, BsonImageList
 from avatar.utils.logconf import logger
 
-# size = (256, 120)
-HOMEDIR = os.getcwd()
-IMAGES_FOLDER = os.path.join(HOMEDIR, 'images')
-BSON_DEST_PATH = os.path.join(HOMEDIR, 'bson')
-
-CONF_FILE = os.path.join(HOMEDIR, 'avatar.conf')
-avatar_conf = {}
-try:
-    with open(CONF_FILE, 'r') as conf_file:
-        for line in conf_file.readlines():
-            line_split = line.split('=')
-            avatar_conf[line_split[0]] = line_split[1]
-    BSON_BATCH_SIZE = avatar_conf.get('BSON_BATCH_SIZE')
-    if BSON_BATCH_SIZE is None:
-        BSON_BATCH_SIZE = 1000
-    else:
-        BSON_BATCH_SIZE = int(BSON_BATCH_SIZE)
-    UNIDADE = avatar_conf.get('UNIDADE')
-    if UNIDADE is None:
-        UNIDADE = 'ALFSTS'
-except FileNotFoundError as err:
-    logger.error(f'HOMEDIR: {HOMEDIR}')
-    logger.error('Arquivo de configuração não encontrado. '
-                 'Usando Unidade "ALFSTS".')
-    logger.error('Crie arquivo avatar.conf para configurar')
-    raise err
-
-tags_numero = ['ContainerId', 'container_no', 'ContainerID1']
-tags_data = ['Date', 'SCANTIME', 'ScanTime']
+from avatar.utils.conf import BSON_BATCH_SIZE, BSON_DEST_PATH, EXTENSOES_JPG, \
+    IMAGES_FOLDER, TAGS_DATA, TAGS_NUMERO, UNIDADE
 
 
 def get_numero_data(root):
     numero = None
     data = None
-    for atag in tags_numero:
+    for atag in TAGS_NUMERO:
         for tag in root.iter(atag):
             lnumero = tag.text
             if lnumero is not None:
                 logger.debug(f'carregaarquivos - numero-{lnumero}')
                 numero = lnumero.replace('?', 'X')
                 break
-
-    for atag in tags_data:
+    for atag in TAGS_DATA:
         for tag in root.iter(atag):
             data = tag.text
             if data is not None:
                 break
-
     return numero, data
+
+
+def get_lista_jpgs(destcompleto, dirpath, mensagem):
+    """Função auxiliar de carrega_arquivos"""
+    lista_jpg = []
+    for extensao in EXTENSOES_JPG:
+        lista_jpg = glob.glob(os.path.join(dirpath, extensao))
+        if len(lista_jpg) > 0:
+            break
+    if len(lista_jpg) == 0:
+        mensagem = mensagem + dirpath + \
+                   ' Imagens %s não' % EXTENSOES_JPG + \
+                   ' encontradas no caminho.\n'
+        logger.debug('**** destcompleto %s *** ' % destcompleto)
+        return lista_jpg, mensagem
+    try:
+        os.makedirs(destcompleto)
+    except FileExistsError as e:
+        # TODO: comparar arquivos, caso cdate ou MD5 sejam
+        # diferente, copiar com nome modificado!!!!
+        lista_jpg2 = lista_jpg.copy()
+        for file in lista_jpg2:
+            name = os.path.basename(file)
+            destcompleto_name = os.path.join(destcompleto, name)
+            cdate_origem = os.path.getctime(file)
+            cdate_destino = os.path.getctime(destcompleto_name)
+            if cdate_destino == cdate_origem:
+                lista_jpg.remove(file)
+                mensagem = mensagem + \
+                           destcompleto_name + ' já existente. - pulando\n'
+    return lista_jpg, mensagem
 
 
 def carregaarquivos(agendamento: Agendamento, session):
@@ -151,29 +153,13 @@ def carregaarquivos(agendamento: Agendamento, session):
                     destparcial = os.path.join(ano, mes, dia, numero)
                     destcompleto = os.path.join(path_destino, destparcial)
                     logger.debug(f'destcompleto {destcompleto}')
-                    lista_jpg = []
-                    extensoes = ['*mp.jpg', '*thumbxray.jpg', '*icon.jpg']
-                    for extensao in extensoes:
-                        lista_jpg = glob.glob(os.path.join(dirpath, extensao))
-                        if len(lista_jpg) > 0:
-                            break
+                    lista_jpg, mensagem = get_lista_jpgs(destcompleto, dirpath, mensagem)
+                    # Copia XML
                     if len(lista_jpg) == 0:
-                        erro = True
-                        mensagem = mensagem + dirpath + \
-                                   ' Imagens (*mp.jpg) não' + \
-                                   ' encontradas no caminho.\n'
-                        logger.debug('**** numero %s *** data %s' % (numero, data))
-                        continue
-                    try:
-                        os.makedirs(destcompleto)
-                    except FileExistsError as e:
-                        # TODO: comparar arquivos, caso cdate ou MD5 sejam
-                        # diferente, copiar com nome modificado!!!!
-                        mensagem = mensagem + \
-                                   destcompleto + ' já existente. - pulando\n'
                         continue
                     copyfile(os.path.join(dirpath, f),
                              os.path.join(destcompleto, f))
+                    # Copia jpgs
                     for file in lista_jpg:
                         name = os.path.basename(file)
                         logger.debug(f'Copiando imagem {name}')
@@ -192,7 +178,6 @@ def carregaarquivos(agendamento: Agendamento, session):
                         except ValueError as err:
                             c.pub_date = c.file_cdate
                             logger.debug(err)
-
                         logger.debug(f'{c.pub_date}, {c.file_mdate},'
                                      f' {c.file_cdate}')
                         c.truckid = truckid
