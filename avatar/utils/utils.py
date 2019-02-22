@@ -36,7 +36,6 @@ def get_numero_data(root):
 
 def get_lista_jpgs(destcompleto, dirpath, mensagem):
     """Função auxiliar de carrega_arquivos"""
-    lista_jpg = []
     for extensao in EXTENSOES_JPG:
         lista_jpg = glob.glob(os.path.join(dirpath, extensao))
         if len(lista_jpg) > 0:
@@ -46,23 +45,29 @@ def get_lista_jpgs(destcompleto, dirpath, mensagem):
             ' Imagens %s não' % EXTENSOES_JPG + \
             ' encontradas no caminho.\n'
         logger.debug('**** destcompleto %s *** ' % destcompleto)
-        return lista_jpg, mensagem
+        return lista_jpg, [], mensagem
     try:
         os.makedirs(destcompleto)
     except FileExistsError:
-        # TODO: comparar arquivos, caso cdate ou MD5 sejam
-        # diferente, copiar com nome modificado!!!!
-        lista_jpg2 = lista_jpg.copy()
-        for file in lista_jpg2:
-            name = os.path.basename(file)
-            destcompleto_name = os.path.join(destcompleto, name)
-            cdate_origem = os.path.getctime(file)
-            cdate_destino = os.path.getctime(destcompleto_name)
+        pass
+    # TODO: comparar arquivos, caso cdate ou MD5 sejam
+    # diferente, copiar com nome modificado!!!!
+    lista_jpg_origem = []
+    lista_jpg_destino = []
+    for origem in lista_jpg:
+        filename = os.path.basename(origem)
+        destino = os.path.join(destcompleto, filename)
+        if os.path.exists(destino):
+            cdate_origem = os.path.getctime(origem)
+            cdate_destino = os.path.getctime(destino)
             if cdate_destino == cdate_origem:
-                lista_jpg.remove(file)
                 mensagem = mensagem + \
-                    destcompleto_name + ' já existente. - pulando\n'
-    return lista_jpg, mensagem
+                    destino + ' já existente. - pulando\n'
+                continue
+        lista_jpg_origem.append(origem)
+        lista_jpg_destino.append(destino)
+
+    return lista_jpg_origem, lista_jpg_destino, mensagem
 
 
 def carregaarquivos(agendamento: Agendamento, session):
@@ -153,24 +158,26 @@ def carregaarquivos(agendamento: Agendamento, session):
                     destparcial = os.path.join(ano, mes, dia, numero)
                     destcompleto = os.path.join(path_destino, destparcial)
                     logger.debug(f'destcompleto {destcompleto}')
-                    lista_jpg, mensagem = get_lista_jpgs(destcompleto,
-                                                         dirpath, mensagem)
+                    lista_origem, lista_destino, mensagem = \
+                        get_lista_jpgs(destcompleto, dirpath, mensagem)
                     # Copia XML
-                    if len(lista_jpg) == 0:
+                    if len(lista_origem) == 0:
                         continue
-                    copyfile(os.path.join(dirpath, f),
-                             os.path.join(destcompleto, f))
+                    try:
+                        copyfile(os.path.join(dirpath, f),
+                                 os.path.join(destcompleto, f))
+                    except FileExistsError:
+                        pass
                     # Copia jpgs
-                    for file in lista_jpg:
-                        name = os.path.basename(file)
-                        logger.debug(f'Copiando imagem {name}')
-                        copyfile(file, os.path.join(destcompleto, name))
+                    for origem, destino in zip(lista_origem, lista_destino):
+                        logger.debug(f'Copiando {origem} para {destino}')
+                        copyfile(origem, destino)
                         c = ConteinerEscaneado(numero, fonteimagem)
-                        c.arqimagemoriginal = destparcial + '/' + name
+                        c.arqimagemoriginal = destino
                         mdate = datetime.fromtimestamp(time.mktime(
-                            time.localtime(os.path.getmtime(file))))
+                            time.localtime(os.path.getmtime(origem))))
                         cdate = datetime.fromtimestamp(time.mktime(
-                            time.localtime(os.path.getctime(file))))
+                            time.localtime(os.path.getctime(origem))))
                         c.file_mdate = mdate
                         c.file_cdate = cdate
                         try:
@@ -189,10 +196,10 @@ def carregaarquivos(agendamento: Agendamento, session):
                         try:
                             session.add(c)
                             session.commit()
-                        except IntegrityError:
+                        except IntegrityError as err:
                             erro = True
-                            mensagem = mensagem + destparcial + numero + \
-                                ' já cadastrado?!\n'
+                            mensagem = mensagem + \
+                                f'{err}!! {numero} já cadastrado?!\n'
     except Exception as err:
         raise (err)
         erro = True
