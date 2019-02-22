@@ -42,8 +42,8 @@ def get_lista_jpgs(destcompleto, dirpath, mensagem):
             break
     if len(lista_jpg) == 0:
         mensagem = mensagem + dirpath + \
-            ' Imagens %s não' % EXTENSOES_JPG + \
-            ' encontradas no caminho.\n'
+                   ' Imagens %s não' % EXTENSOES_JPG + \
+                   ' encontradas no caminho.\n'
         logger.debug('**** destcompleto %s *** ' % destcompleto)
         return lista_jpg, [], mensagem
     try:
@@ -60,10 +60,14 @@ def get_lista_jpgs(destcompleto, dirpath, mensagem):
         if os.path.exists(destino):
             cdate_origem = os.path.getctime(origem)
             cdate_destino = os.path.getctime(destino)
+            # Se arquivo existente, pula...
             if cdate_destino == cdate_origem:
                 mensagem = mensagem + \
-                    destino + ' já existente. - pulando\n'
+                           destino + ' já existente. - pulando\n'
                 continue
+            else:  # Se existente mas com data diferente, copia com outro nome
+                destino = destino + \
+                          datetime.strftime(datetime.now(), 'Y%m%d%H%M')
         lista_jpg_origem.append(origem)
         lista_jpg_destino.append(destino)
 
@@ -115,7 +119,7 @@ def carregaarquivos(agendamento: Agendamento, session):
             logger.debug(f'Listagem de arquivos: {os.listdir(path_origem)}')
             logger.debug(f'Caminho: {path_origem}')
             mensagem = mensagem + path_origem + \
-                ' retornou lista vazia!! Sem acesso? \n'
+                       ' retornou lista vazia!! Sem acesso? \n'
             return mensagem, True
         for result in glob.iglob(path_origem):
             for dirpath, dirnames, files in os.walk(result):
@@ -199,7 +203,7 @@ def carregaarquivos(agendamento: Agendamento, session):
                         except IntegrityError as err:
                             erro = True
                             mensagem = mensagem + \
-                                f'{err}!! {numero} já cadastrado?!\n'
+                                       f'{err}!! {numero} já cadastrado?!\n'
     except Exception as err:
         raise (err)
         erro = True
@@ -308,7 +312,7 @@ def exporta_bson(session, batch_size: int = BSON_BATCH_SIZE):
             logger.error(f'EXPORTA BSON-ERRO:{str(err)}')
             logger.error(f'EXPORTA BSON-Ao exportar: {xmlfile}')
     name = datetime.strftime(start, '%Y-%m-%d_%H-%M-%S') + '_' + \
-        datetime.strftime(end, '%Y-%m-%d_%H-%M-%S')
+           datetime.strftime(end, '%Y-%m-%d_%H-%M-%S')
     s3 = time.time()
     logger.info(f'EXPORTA BSON-Bson montado em {s3 - s2} segundos')
     for containerescaneado in nao_exportados:
