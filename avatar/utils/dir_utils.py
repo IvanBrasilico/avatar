@@ -13,7 +13,7 @@ def pega_fontes():
                 try:
                     caminho = os.path.join(drive, dir)
                     if not detecta_mascara(caminho) == []:
-                        fontes.add(caminho)
+                        fontes.append(caminho)
                 except ValueError:
                     continue
     return fontes
@@ -58,16 +58,25 @@ def mask_of_data(pasta: str, nivel: int = 0) -> bool:
 
 
 def detecta(caminho: str, pastas: list):
+    lpastas = None
     lista_pastas = os.listdir(os.path.join(caminho, *pastas))
     if len(lista_pastas) == 0:
+        print('1', pastas)
         return formata_mascaras(pastas)
     if len(pastas) == 0:
+        print('2', lista_pastas)
         lpastas = [pasta for pasta in lista_pastas if pasta[:4] == ANO]
+        print('2.1', lpastas)
         if len(lpastas) == 0:
             return pastas
-    pasta = lista_pastas[0]
+    if lpastas:
+        pasta = lpastas[0]
+    else:
+        pasta = lista_pastas[0]
+    print('2.2', pasta)
     if mask_of_data(pasta) is not None:
         pastas.append(pasta)
+        print('3', pastas)
         return detecta(caminho, pastas)
     if len(pastas) > 0:  # Achou o pote no fim do arco-íris
         return formata_mascaras(pastas)
