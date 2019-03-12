@@ -33,7 +33,7 @@ class AgendamentoForm():
             row=3, column=0, sticky=tk.W, pady=4)
         tk.Button(self.top, text='Salvar', command=self.save_and_close).grid(
             row=3, column=1, sticky=tk.W, pady=4)
-        tk.Button(self.top, text='Detectar', command=self.detect).grid(
+        tk.Button(self.top, text='Detectar', command=self.detecta).grid(
             row=3, column=2, sticky=tk.W, pady=4)
         tk.Button(self.top, text='Rodar', command=self.run).grid(
             row=3, column=3, sticky=tk.W, pady=4)
@@ -90,4 +90,6 @@ class AgendamentoForm():
                 messagebox.showinfo('Trata agendamentos', mensagem)
 
     def detecta(self):
-        self.edtMascara = detecta_mascara(self.fonte.caminho)
+        mascara = detecta_mascara(self.fonte.caminho)
+        print(mascara)
+        self.edtMascara.insert(0, mascara)
