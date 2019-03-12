@@ -185,12 +185,16 @@ def carregaarquivos(agendamento: Agendamento, session):
                         c.file_mdate = mdate
                         c.file_cdate = cdate
                         try:
-                            c.pub_date = datetime.strptime(data,
-                                                           '%Y-%m-%d_%H-%M-%S')
-                            # datetime(int(ano), int(mes), int(dia))
+                            if 'Z' in data:
+                                parse_str  = '%Y-%m-%dT%H:%M:%S.%z'
+                            elif '_' in data:
+                                parse_str  = '%Y-%m-%d_%H-%M-%S'
+                            else:
+                                parse_str  = '%Y-%m-%d %H-%M-%S'
+                            c.pub_date = datetime.strptime(data, parse_str)
                         except ValueError as err:
                             c.pub_date = c.file_cdate
-                            logger.debug(err)
+                            logger.info(err)
                         logger.debug(f'{c.pub_date}, {c.file_mdate},'
                                      f' {c.file_cdate}')
                         c.truckid = truckid
