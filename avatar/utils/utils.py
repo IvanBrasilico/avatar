@@ -50,24 +50,13 @@ def get_lista_jpgs(destcompleto, dirpath, mensagem):
         os.makedirs(destcompleto)
     except FileExistsError:
         pass
-    # TODO: comparar arquivos, caso cdate ou MD5 sejam
-    # diferente, copiar com nome modificado!!!!
     lista_jpg_origem = []
     lista_jpg_destino = []
     for origem in lista_jpg:
         filename = os.path.basename(origem)
         destino = os.path.join(destcompleto, filename)
         if os.path.exists(destino):
-            cdate_origem = os.path.getctime(origem)
-            cdate_destino = os.path.getctime(destino)
-            # Se arquivo existente, pula...
-            if cdate_destino == cdate_origem:
-                mensagem = mensagem + \
-                           destino + ' já existente. - pulando\n'
-                continue
-            else:  # Se existente mas com data diferente, copia com outro nome
-                destino = destino + \
-                          datetime.strftime(datetime.now(), 'Y%m%d%H%M')
+            continue
         lista_jpg_origem.append(origem)
         lista_jpg_destino.append(destino)
 
@@ -185,12 +174,12 @@ def carregaarquivos(agendamento: Agendamento, session):
                         c.file_mdate = mdate
                         c.file_cdate = cdate
                         try:
-                            if 'Z' in data:
-                                parse_str  = '%Y-%m-%dT%H:%M:%S.%z'
-                            elif '_' in data:
-                                parse_str  = '%Y-%m-%d_%H-%M-%S'
-                            else:
-                                parse_str  = '%Y-%m-%d %H-%M-%S'
+                            data = data.split('.')[0]
+                            for char in 'tT_':
+                                data = data.replace(char, ' ')
+                            for char in 'zZ':
+                                data = data.replace(char, '')
+                            parse_str  = '%Y-%m-%d %H:%M:%S'
                             c.pub_date = datetime.strptime(data, parse_str)
                         except ValueError as err:
                             c.pub_date = c.file_cdate
