@@ -191,10 +191,11 @@ def carregaarquivos(agendamento: Agendamento, session):
                         pass
                     # Copia jpgs
                     for origem, destino in zip(lista_origem, lista_destino):
-                        logger.debug(f'Copiando {origem} para {destino}')
+                        logger.info(f'Copiando {origem} para {destino}')
                         copyjpg(origem, destino)
                         c = ConteinerEscaneado(numero, fonteimagem)
-                        c.arqimagemoriginal = destino
+                        name = os.path.basename(destino)
+                        c.arqimagemoriginal = destparcial + '/' + name
                         mdate = datetime.fromtimestamp(time.mktime(
                             time.localtime(os.path.getmtime(origem))))
                         cdate = datetime.fromtimestamp(time.mktime(
@@ -316,7 +317,7 @@ def exporta_bson(session, batch_size: int = BSON_BATCH_SIZE):
             bsonimagelist.addBsonImage(bsonimage)
         except FileNotFoundError as err:
             logger.error(f'EXPORTA BSON-ERRO:{str(err)}')
-            logger.error(f'EXPORTA BSON-Ao exportar: {value["imagem"]}')
+            logger.error(f'EXPORTA BSON JPG-Ao exportar: {value["imagem"]}')
         # Puxa arquivo .xml
         try:
             xmlfile = ''
@@ -331,7 +332,7 @@ def exporta_bson(session, batch_size: int = BSON_BATCH_SIZE):
             bsonimagelist.addBsonImage(bsonimage)
         except FileNotFoundError as err:
             logger.error(f'EXPORTA BSON-ERRO:{str(err)}')
-            logger.error(f'EXPORTA BSON-Ao exportar: {xmlfile}')
+            logger.error(f'EXPORTA BSON XML-Ao exportar: {xmlfile}')
     name = datetime.strftime(start, '%Y-%m-%d_%H-%M-%S') + '_' + \
            datetime.strftime(end, '%Y-%m-%d_%H-%M-%S')
     s3 = time.time()

@@ -41,4 +41,4 @@ if thumb_size_str is None:
     THUMB_SIZE = (800, 600)
 else:
     thumb_size_list = thumb_size_str.split(',')
-    THUMB_SIZE = (thumb_size_list[0], thumb_size_list[1])
+    THUMB_SIZE = (int(thumb_size_list[0]), int(thumb_size_list[1]))
