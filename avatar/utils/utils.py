@@ -88,7 +88,7 @@ def get_lista_jpgs(destcompleto, dirpath, mensagem):
 
 def copyjpg(origem, destino):
     pil_image = Image.open(origem)
-    pil_image.thumbnail(THUMB_SIZE)
+    pil_image.thumbnail(THUMB_SIZE, Image.ANTIALIAS)
     pil_image.save(destino)
 
 def carregaarquivos(agendamento: Agendamento, session):
