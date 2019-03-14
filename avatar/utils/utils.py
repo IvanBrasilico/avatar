@@ -87,7 +87,7 @@ def get_lista_jpgs(destcompleto, dirpath, mensagem):
     return lista_jpg_origem, lista_jpg_destino, mensagem
 
 def copyjpg(origem, destino):
-    pil_image = Image.Open(origem)
+    pil_image = Image.open(origem)
     pil_image.thumbnail(THUMB_SIZE)
     pil_image.save(destino)
 
