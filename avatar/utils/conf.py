@@ -20,30 +20,25 @@ try:
         for line in conf_file.readlines():
             line_split = line.split('=')
             avatar_conf[line_split[0]] = line_split[1]
-    BSON_BATCH_SIZE = avatar_conf.get('BSON_BATCH_SIZE')
-    if BSON_BATCH_SIZE is None:
-        BSON_BATCH_SIZE = 1000
-    else:
-        BSON_BATCH_SIZE = int(BSON_BATCH_SIZE)
-    UNIDADE = avatar_conf.get('UNIDADE')
-    if UNIDADE is None:
-        UNIDADE = 'ALFSTS'
-    EXTENSOES_JPG = avatar_conf.get('EXTENSOES_JPG')
-    if EXTENSOES_JPG is None:
-        EXTENSOES_JPG = ['*mp.jpg', '*thumbxray.jpg', '*icon.jpg']
-    INTERVALO = avatar_conf.get('INTERVALO')
-    if INTERVALO is None:
-        INTERVALO = 30
-    BSON_DIR = avatar_conf.get('BSON_DIR')
-    if BSON_DIR is None:
-        BSON_DIR = os.path.join('.', 'bson')
-    VIRASANA_URL = avatar_conf.get('VIRASANA_URL')
-    if VIRASANA_URL is None:
-        VIRASANA_URL = 'http://10.68.64.12/virasana/'
-
 except FileNotFoundError as err:
     logger.error(f'HOMEDIR: {HOMEDIR}')
     logger.error('Arquivo de configuração não encontrado. '
                  'Usando Unidade "ALFSTS".')
     logger.error('Crie arquivo avatar.conf para configurar')
     raise err
+
+BSON_BATCH_SIZE = int(avatar_conf.get('BSON_BATCH_SIZE', 1000))
+UNIDADE = avatar_conf.get('UNIDADE', 'ALFSTS')
+EXTENSOES_JPG = avatar_conf.get(
+    'EXTENSOES_JPG',
+    ['*tamp.jpg', '*thumbxray.jpg', '*icon.jpg']
+)
+INTERVALO = int(avatar_conf.get('INTERVALO', 30))
+BSON_DIR = avatar_conf.get('BSON_DIR', os.path.join('.', 'bson'))
+VIRASANA_URL = avatar_conf.get('VIRASANA_URL', 'http://10.68.64.12/virasana/')
+thumb_size_str = avatar_conf.get('THUMB_SIZE')
+if thumb_size_str is None:
+    THUMB_SIZE = (800, 600)
+else:
+    thumb_size_list = thumb_size_str.split(',')
+    THUMB_SIZE = (thumb_size_list[0], thumb_size_list[1])

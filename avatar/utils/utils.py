@@ -12,9 +12,9 @@ from sqlalchemy.exc import IntegrityError
 from avatar.models.models import Agendamento, ConteinerEscaneado
 from avatar.utils.bsonimage import BsonImage, BsonImageList
 from avatar.utils.conf import BSON_BATCH_SIZE, BSON_DEST_PATH, EXTENSOES_JPG, \
-    IMAGES_FOLDER, TAGS_DATA, TAGS_NUMERO, UNIDADE
+    IMAGES_FOLDER, TAGS_DATA, TAGS_NUMERO, THUMB_SIZE, UNIDADE
 from avatar.utils.logconf import logger
-
+from PIL import Image
 
 def get_numero_data(root):
     numero = None
@@ -35,7 +35,21 @@ def get_numero_data(root):
 
 
 def get_lista_jpgs(destcompleto, dirpath, mensagem):
-    """Função auxiliar de carrega_arquivos"""
+    """Função auxiliar de carrega_arquivos. Encontra os jpgs alvo.
+
+    Aqui é necessário programar as diversas lógicas utilizadas de
+    nomeacao de arquivos pelos escâneres/recintos.
+
+    No início TODOS os Recintos disponibilizavam um "*stamp.jpg"
+    Depois, foram encontradas outras padronizações
+    Pode ser necessário no futuro exigir uma padronização, senão as
+    possibilidades crescerão tornando o código demasiado complicado.
+    No mínimo, será necessário processar um DE_PARA prévio e
+    parametrizável por arquivos de configuração ou campos no
+    Banco de Dados.
+    """
+    # Procura pelos sufixos conhecidos, as miniaturas, para saber o arquivo
+    # correto a copiar
     for extensao in EXTENSOES_JPG:
         lista_jpg = glob.glob(os.path.join(dirpath, extensao))
         if len(lista_jpg) > 0:
@@ -46,6 +60,15 @@ def get_lista_jpgs(destcompleto, dirpath, mensagem):
                    ' encontradas no caminho.\n'
         logger.debug('**** destcompleto %s *** ' % destcompleto)
         return lista_jpg, [], mensagem
+    # Pega arquivos um pouco maiores (com o mesmo radical no nome)
+    # porque as miniaturas fornecidas possuem resolução baixa
+    all_jpgs = glob.glob(os.path.join(dirpath, '*.jpg'))
+    for jpg in all_jpgs:
+        for ind, origem in enumerate(lista_jpg):
+            jpg_semextensao = jpg[:-5]
+            origem_comparar = origem[:len(jpg_semextensao)]
+            if origem_comparar == jpg_semextensao:
+                lista_jpg[ind] = jpg
     try:
         os.makedirs(destcompleto)
     except FileExistsError:
@@ -55,6 +78,7 @@ def get_lista_jpgs(destcompleto, dirpath, mensagem):
     for origem in lista_jpg:
         filename = os.path.basename(origem)
         destino = os.path.join(destcompleto, filename)
+        # Se arquivo já existe no destino, pula.
         if os.path.exists(destino):
             continue
         lista_jpg_origem.append(origem)
@@ -62,6 +86,10 @@ def get_lista_jpgs(destcompleto, dirpath, mensagem):
 
     return lista_jpg_origem, lista_jpg_destino, mensagem
 
+def copyjpg(origem, destino):
+    pil_image = Image.Open(origem)
+    pil_image.thumbnail(THUMB_SIZE)
+    pil_image.save(destino)
 
 def carregaarquivos(agendamento: Agendamento, session):
     """Copia arquivos do caminho na Fonte.
@@ -164,7 +192,7 @@ def carregaarquivos(agendamento: Agendamento, session):
                     # Copia jpgs
                     for origem, destino in zip(lista_origem, lista_destino):
                         logger.debug(f'Copiando {origem} para {destino}')
-                        copyfile(origem, destino)
+                        copyjpg(origem, destino)
                         c = ConteinerEscaneado(numero, fonteimagem)
                         c.arqimagemoriginal = destino
                         mdate = datetime.fromtimestamp(time.mktime(
