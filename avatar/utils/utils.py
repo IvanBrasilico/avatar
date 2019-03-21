@@ -191,6 +191,7 @@ def carregaarquivos(agendamento: Agendamento, session):
                         pass
                     except FileNotFoundError as err:
                         logger.error(str(err))
+                        continue
                     # Copia jpgs
                     for origem, destino in zip(lista_origem, lista_destino):
                         logger.info(f'Copiando {origem} para {destino}')
