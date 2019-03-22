@@ -191,7 +191,7 @@ def carregaarquivos(agendamento: Agendamento, session):
                         pass
                     # Copia jpgs
                     for origem, destino in zip(lista_origem, lista_destino):
-                        logger.info(f'Copiando {origem} para {destino}')
+                        logger.info(f'Copiando imagem {origem} para {destino}')
                         copyjpg(origem, destino)
                         c = ConteinerEscaneado(numero, fonteimagem)
                         name = os.path.basename(destino)
