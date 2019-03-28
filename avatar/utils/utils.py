@@ -195,8 +195,6 @@ def carregaarquivos(agendamento: Agendamento, session):
                     # Copia jpgs
                     for origem, destino in zip(lista_origem, lista_destino):
                         logger.info(f'Copiando imagem {origem} para {destino}')
-                        copyjpg(origem, destino)
-                        logger.info(f'Copiando {origem} para {destino}')
                         try:
                             copyjpg(origem, destino)
                         except OSError as err:
