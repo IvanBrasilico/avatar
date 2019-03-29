@@ -190,7 +190,7 @@ def carregaarquivos(agendamento: Agendamento, session):
                     except FileExistsError:
                         pass
                     except Exception as err:
-                        logger.error(str(err))
+                        logger.error(err, exc_info=True)
                         continue
                     # Copia jpgs
                     for origem, destino in zip(lista_origem, lista_destino):
