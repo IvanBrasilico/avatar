@@ -31,6 +31,8 @@ def get_numero_data(root):
             data = tag.text
             if data is not None:
                 break
+    if numero:
+        numero = numero.strip()
     return numero, data
 
 
@@ -73,6 +75,9 @@ def get_lista_jpgs(destcompleto, dirpath, mensagem):
         os.makedirs(destcompleto)
     except FileExistsError:
         pass
+    except FileNotFoundError as err:
+        logger.error(err, exc_info=True)
+        return [], [], mensagem
     lista_jpg_origem = []
     lista_jpg_destino = []
     for origem in lista_jpg:
