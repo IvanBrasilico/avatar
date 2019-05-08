@@ -126,7 +126,8 @@ class ConteinerEscaneado(Base):
     pub_date = Column(DateTime)  # 'Data escaneamento informado do arquivo XML
     file_mdate = Column(DateTime)  # 'Data da última modificação do arquivo')
     file_cdate = Column(DateTime)  # 'Data da criação do arquivo (Windows)')
-    arqimagemoriginal = Column(String(50))
+    origem = Column(String(200)) # Caminho da imagem original
+    arqimagemoriginal = Column(String(50)) # Arquivo copiado
     truckid = Column(String(50))
     alerta = Column(Integer)
     exportado = Column(Integer)

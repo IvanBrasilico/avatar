@@ -210,6 +210,7 @@ def carregaarquivos(agendamento: Agendamento, session):
                             continue
                         c = ConteinerEscaneado(numero, fonteimagem)
                         name = os.path.basename(destino)
+                        c.origem = origem
                         c.arqimagemoriginal = destparcial + '/' + name
                         mdate = datetime.fromtimestamp(time.mktime(
                             time.localtime(os.path.getmtime(origem))))
@@ -311,6 +312,7 @@ def exporta_bson(session, batch_size: int = BSON_BATCH_SIZE):
             'UNIDADE': UNIDADE,
             'idcov': str(containerescaneado.id),
             'imagem': imagem,
+            'origem': containerescaneado.origem,
             'dataescaneamento': containerescaneado.pub_date,
             'criacaoarquivo': containerescaneado.file_cdate,
             'modificacaoarquivo': containerescaneado.file_mdate,
