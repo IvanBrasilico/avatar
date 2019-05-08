@@ -29,10 +29,7 @@ except FileNotFoundError as err:
 
 BSON_BATCH_SIZE = int(avatar_conf.get('BSON_BATCH_SIZE', 1000))
 UNIDADE = avatar_conf.get('UNIDADE', 'ALFSTS')
-EXTENSOES_JPG = avatar_conf.get(
-    'EXTENSOES_JPG',
-    ['*tamp.jpg', '*thumbxray.jpg', '*icon.jpg']
-)
+
 INTERVALO = int(avatar_conf.get('INTERVALO', 30))
 BSON_DIR = avatar_conf.get('BSON_DIR', os.path.join('.', 'bson'))
 VIRASANA_URL = avatar_conf.get('VIRASANA_URL', 'http://10.68.64.12/virasana/')
@@ -42,3 +39,26 @@ if thumb_size_str is None:
 else:
     thumb_size_list = thumb_size_str.split(',')
     THUMB_SIZE = (int(thumb_size_list[0]), int(thumb_size_list[1]))
+
+
+def get_tags_str(titulo: str, default):
+    tags = avatar_conf.get(titulo)
+    if tags is None:
+        return default
+    return tags.split(',')
+
+
+EXTENSOES_JPG = get_tags_str(
+    'EXTENSOES_JPG',
+    ['*tamp.jpg', '*thumbxray.jpg', '*icon.jpg', '*-xray.jpg']
+)
+
+TAGS_NUMERO = get_tags_str(
+    'TAGS_NUMERO',
+    ['ContainerId', 'container_no', 'ContainerID1']
+)
+
+TAGS_DATA = get_tags_str(
+    'TAGS_DATA',
+    ['Date', 'SCANTIME', 'ScanTime']
+)

@@ -124,12 +124,14 @@ def carregaarquivos(agendamento: Agendamento, session):
     path_origem = os.path.join(fonteimagem.caminho, caminho)
     path_destino = os.path.join(IMAGES_FOLDER, fonteimagem.nome)
     logger.debug(f'Origem: {path_origem}')
+    logger.info(f'Origem: {path_origem}')
     mensagem = ''
     erro = False
     try:
         try:
             lista_dir = [dir for dir in os.listdir(path_origem)
                          if os.path.isdir(os.path.join(path_origem, dir))]
+            logger.info(f'{len(lista_dir)} diretorios encontrados...')
         except FileNotFoundError as err:
             logger.warning(err)
             mensagem = mensagem + path_origem + str(err)
@@ -161,6 +163,7 @@ def carregaarquivos(agendamento: Agendamento, session):
                         mensagem = \
                             mensagem + os.path.join(dirpath, f) + \
                             ' XML inválido. ' + str(err) + '\n'
+                        logger.debug(' XML inválido. ' + str(err))
                         continue
                     numero, data = get_numero_data(root)
                     if numero is None or data is None:
@@ -168,6 +171,7 @@ def carregaarquivos(agendamento: Agendamento, session):
                             mensagem + os.path.join(dirpath, f) + \
                             ' XML inválido. ' + \
                             'XML deve conter chaves ContainerId e Date.'
+                        logger.debug('XML deve conter ContainerId e Date.')
                         continue
 
                     truckid = 'NI'
