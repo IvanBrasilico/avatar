@@ -93,6 +93,9 @@ def get_lista_jpgs(destcompleto, dirpath, mensagem):
 
 def copyjpg(origem, destino):
     pil_image = Image.open(origem)
+    # TODO: Ver se mantém ratio
+    # size = pil_image.size
+    # new_size = (THUMB_SIZE[0], int(THUMB_SIZE[0]/size[0] * size[1]))
     pil_image.thumbnail(THUMB_SIZE, Image.ANTIALIAS)
     pil_image.save(destino)
 
