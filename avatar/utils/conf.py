@@ -55,10 +55,10 @@ EXTENSOES_JPG = get_tags_str(
 
 TAGS_NUMERO = get_tags_str(
     'TAGS_NUMERO',
-    ['ContainerId', 'container_no', 'ContainerID1']
+    ['ContainerId', 'container_no', 'ContainerID1', 'Container1']
 )
 
 TAGS_DATA = get_tags_str(
     'TAGS_DATA',
-    ['Date', 'SCANTIME', 'ScanTime']
+    ['Date', 'SCANTIME', 'ScanTime', 'createdate']
 )

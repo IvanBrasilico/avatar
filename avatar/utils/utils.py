@@ -19,11 +19,17 @@ from PIL import Image
 def get_numero_data(root):
     numero = None
     data = None
+    for tag in root.iter('attribute'):
+        if tag.attrib.get('name') in TAGS_NUMERO:
+            numero = tag.text
+            logger.debug(f'get_numero_data - attribute ' +
+                         tag.attrib.get('name') + numero)
     for atag in TAGS_NUMERO:
         for tag in root.iter(atag):
+            logger.debug(tag)
             lnumero = tag.text
             if lnumero is not None:
-                logger.debug(f'carregaarquivos - numero-{lnumero}')
+                logger.debug(f'get_numero_data - {atag} -{lnumero}')
                 numero = lnumero.replace('?', 'X')
                 break
     for atag in TAGS_DATA:
@@ -172,6 +178,10 @@ def carregaarquivos(agendamento: Agendamento, session):
                             ' XML inválido. ' + \
                             'XML deve conter chaves ContainerId e Date.'
                         logger.debug('XML deve conter ContainerId e Date.')
+                        logger.debug(f'{data:} data')
+                        logger.debug(f'{TAGS_DATA:} TAGS_DATA')
+                        logger.debug(f'{numero:} numero')
+                        logger.debug(f'{TAGS_NUMERO:} TAGS_NUMERO')
                         continue
 
                     truckid = 'NI'
