@@ -109,7 +109,7 @@ class FonteImagem(Base):
         if len(self.imagens) > 0:
             raise Exception('Fonte com importações de imagens já realizadas.'
                             'Não posso excluir.')
-        if self.agendamento or len(self.agendamento) > 0:
+        if self.agendamento and len(self.agendamento) > 0:
             raise Exception('Fonte com agendamento.'
                             'Não posso excluir.')
         session.delete(self)
