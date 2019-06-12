@@ -7,9 +7,6 @@ from avatar.utils.logconf import logger
 HOMEDIR = os.getcwd()
 IMAGES_FOLDER = os.path.join(HOMEDIR, 'images')
 BSON_DEST_PATH = os.path.join(HOMEDIR, 'bson')
-TAGS_NUMERO = ['ContainerId', 'container_no', 'ContainerID1']
-TAGS_DATA = ['Date', 'SCANTIME', 'ScanTime']
-
 BSON_DIR = os.path.join('.', 'bson')
 VIRASANA_URL = 'http://10.68.64.12/virasana/'
 
@@ -19,7 +16,9 @@ try:
     with open(CONF_FILE, 'r') as conf_file:
         for line in conf_file.readlines():
             line_split = line.split('=')
-            avatar_conf[line_split[0]] = line_split[1]
+            key = line_split[0].strip()
+            value = line_split[1].strip()
+            avatar_conf[key] = value
 except FileNotFoundError as err:
     logger.error(f'HOMEDIR: {HOMEDIR}')
     logger.error('Arquivo de configuração não encontrado. '
@@ -62,3 +61,10 @@ TAGS_DATA = get_tags_str(
     'TAGS_DATA',
     ['Date', 'SCANTIME', 'ScanTime', 'createdate']
 )
+
+if __name__ == '__main__':
+    import sys
+    confs = dir(sys.modules[__name__])
+    for conf in confs:
+        if '__' not in conf:
+            print(conf,  getattr(sys.modules[__name__], conf))

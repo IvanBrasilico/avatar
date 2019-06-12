@@ -20,16 +20,17 @@ def get_numero_data(root):
     numero = None
     data = None
     for tag in root.iter('attribute'):
-        if tag.attrib.get('name') in TAGS_NUMERO:
+        tagname = tag.attrib.get('name')
+        if tagname and tagname in TAGS_NUMERO:
             numero = tag.text
-            logger.debug(f'get_numero_data - attribute ' +
-                         tag.attrib.get('name') + numero)
+            logger.debug('get_numero_data - attribute %s - %s' %
+                         (str(tagname), str(numero)))
     for atag in TAGS_NUMERO:
         for tag in root.iter(atag):
             logger.debug(tag)
             lnumero = tag.text
             if lnumero is not None:
-                logger.debug(f'get_numero_data - {atag} -{lnumero}')
+                logger.debug('get_numero_data - %s - %s' % (atag, lnumero))
                 numero = lnumero.replace('?', 'X')
                 break
     for atag in TAGS_DATA:
