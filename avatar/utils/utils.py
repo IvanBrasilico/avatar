@@ -100,10 +100,10 @@ def get_lista_jpgs(destcompleto, dirpath, mensagem):
 
 def copyjpg(origem, destino):
     pil_image = Image.open(origem)
-    # TODO: Ver se mantém ratio
-    # size = pil_image.size
-    # new_size = (THUMB_SIZE[0], int(THUMB_SIZE[0]/size[0] * size[1]))
-    pil_image.thumbnail(THUMB_SIZE, Image.ANTIALIAS)
+    #  Mantain ratio
+    size = pil_image.size
+    new_size = (int(THUMB_SIZE[1]/size[1] * size[0]), THUMB_SIZE[1])
+    pil_image.thumbnail(new_size, Image.ANTIALIAS)
     pil_image.save(destino)
 
 def carregaarquivos(agendamento: Agendamento, session):
@@ -226,7 +226,7 @@ def carregaarquivos(agendamento: Agendamento, session):
                         c = ConteinerEscaneado(numero, fonteimagem)
                         name = os.path.basename(destino)
                         c.origem = origem
-                        c.arqimagemoriginal = destparcial + '/' + name
+                        c.arqimagemoriginal = os.path.join(destparcial, name)
                         mdate = datetime.fromtimestamp(time.mktime(
                             time.localtime(os.path.getmtime(origem))))
                         cdate = datetime.fromtimestamp(time.mktime(
@@ -347,7 +347,7 @@ def exporta_bson(session, batch_size: int = BSON_BATCH_SIZE):
         try:
             bsonimage = BsonImage(filename=jpegfile, **value)
             bsonimagelist.addBsonImage(bsonimage)
-        except FileNotFoundError as err:
+        except (FileNotFoundError, PermissionError) as err:
             logger.error(f'EXPORTA BSON-ERRO:{str(err)}')
             logger.error(f'EXPORTA BSON JPG-Ao exportar: {value["imagem"]}')
         # Puxa arquivo .xml
@@ -362,7 +362,7 @@ def exporta_bson(session, batch_size: int = BSON_BATCH_SIZE):
             value['contentType'] = 'text/xml'
             bsonimage = BsonImage(filename=xmlfile, **value)
             bsonimagelist.addBsonImage(bsonimage)
-        except FileNotFoundError as err:
+        except (FileNotFoundError, PermissionError) as err:
             logger.error(f'EXPORTA BSON-ERRO:{str(err)}')
             logger.error(f'EXPORTA BSON XML-Ao exportar: {xmlfile}')
     name = datetime.strftime(start, '%Y-%m-%d_%H-%M-%S') + '_' + \
