@@ -7,6 +7,7 @@ from datetime import datetime, timedelta
 from shutil import copyfile
 from xml.etree.ElementTree import ParseError
 
+from PIL import Image
 from sqlalchemy.exc import IntegrityError
 
 from avatar.models.models import Agendamento, ConteinerEscaneado
@@ -14,7 +15,7 @@ from avatar.utils.bsonimage import BsonImage, BsonImageList
 from avatar.utils.conf import BSON_BATCH_SIZE, BSON_DEST_PATH, EXTENSOES_JPG, \
     IMAGES_FOLDER, TAGS_DATA, TAGS_NUMERO, THUMB_SIZE, UNIDADE
 from avatar.utils.logconf import logger
-from PIL import Image
+
 
 def get_numero_data(root):
     numero = None
@@ -98,13 +99,26 @@ def get_lista_jpgs(destcompleto, dirpath, mensagem):
 
     return lista_jpg_origem, lista_jpg_destino, mensagem
 
+
 def copyjpg(origem, destino):
     pil_image = Image.open(origem)
     #  Mantain ratio
     size = pil_image.size
-    new_size = (int(THUMB_SIZE[1]/size[1] * size[0]), THUMB_SIZE[1])
+    new_size = (int(THUMB_SIZE[1] / size[1] * size[0]), THUMB_SIZE[1])
     pil_image.thumbnail(new_size, Image.ANTIALIAS)
     pil_image.save(destino)
+
+
+def extrai_numero_container_valido(num_container):
+    """Extrai numero container da String. Se não encontrar, retorna None"""
+    if len(num_container) >= 10:
+        # ABCD1234567 (7 é opcional)
+        letras = num_container[:4]
+        numeros = num_container[4:11]
+        if letras.isalpha() and numeros.isdigit():
+            return letras + numeros
+    return None
+
 
 def carregaarquivos(agendamento: Agendamento, session):
     """Copia arquivos do caminho na Fonte.
@@ -184,6 +198,15 @@ def carregaarquivos(agendamento: Agendamento, session):
                         logger.debug(f'{numero:} numero')
                         logger.debug(f'{TAGS_NUMERO:} TAGS_NUMERO')
                         continue
+                    if extrai_numero_container_valido(numero) is None:
+                        logger.info(f'Numero com defeito {numero}')
+                        logger.info(f'Tentando recuperar do diretório {dirpath}')
+                        logger.info(os.path.basename(dirpath))
+                        numero_novo = extrai_numero_container_valido(
+                            os.path.basename(dirpath))
+                        if numero_novo is not None:
+                            numero = numero_novo
+                            logger.info(f'{numero} recuperado do diretório')
 
                     truckid = 'NI'
                     operador = 'NI'
@@ -226,7 +249,7 @@ def carregaarquivos(agendamento: Agendamento, session):
                         c = ConteinerEscaneado(numero, fonteimagem)
                         name = os.path.basename(destino)
                         c.origem = origem
-                        c.arqimagemoriginal = os.path.join(destparcial, name)
+                        c.arqimagemoriginal = os.path.join(origem, name)
                         mdate = datetime.fromtimestamp(time.mktime(
                             time.localtime(os.path.getmtime(origem))))
                         cdate = datetime.fromtimestamp(time.mktime(
@@ -239,7 +262,7 @@ def carregaarquivos(agendamento: Agendamento, session):
                                 data = data.replace(char, ' ')
                             for char in 'zZ':
                                 data = data.replace(char, '')
-                            parse_str  = '%Y-%m-%d %H:%M:%S'
+                            parse_str = '%Y-%m-%d %H:%M:%S'
                             c.pub_date = datetime.strptime(data, parse_str)
                         except ValueError as err:
                             c.pub_date = c.file_cdate
