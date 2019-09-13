@@ -248,7 +248,8 @@ def carregaarquivos(agendamento: Agendamento, session):
                         c = ConteinerEscaneado(numero, fonteimagem)
                         name = os.path.basename(destino)
                         c.origem = origem
-                        c.arqimagemoriginal = os.path.join(origem, name)
+                        c.arqimagemoriginal = os.path.join(destparcial, name)
+                        # c.arqimagemoriginal = os.path.join(origem, name)
                         mdate = datetime.fromtimestamp(time.mktime(
                             time.localtime(os.path.getmtime(origem))))
                         cdate = datetime.fromtimestamp(time.mktime(
