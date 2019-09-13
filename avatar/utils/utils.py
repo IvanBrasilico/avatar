@@ -166,7 +166,6 @@ def carregaarquivos(agendamento: Agendamento, session):
                         tree = ET.parse(os.path.join(dirpath, f))
                         root = tree.getroot()
                     except ParseError as err:
-                        erro = True
                         mensagem = \
                             mensagem + os.path.join(dirpath, f) + \
                             ' XML inválido. ' + str(err) + '\n'
@@ -254,7 +253,6 @@ def carregaarquivos(agendamento: Agendamento, session):
                             session.add(c)
                             session.commit()
                         except IntegrityError as err:
-                            erro = True
                             mensagem = mensagem + \
                                        f'{err}!! {numero} já cadastrado?!\n'
     except Exception as err:
