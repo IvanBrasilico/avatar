@@ -7,6 +7,8 @@ from datetime import datetime
 from logging import DEBUG, INFO
 from threading import Thread
 from tkinter import messagebox
+sys.path.insert(0, '.')
+print(sys.path)
 
 from avatar.models.models import Agendamento, FonteImagem, MySession
 from avatar.tkgui.frmFonte import FonteForm
