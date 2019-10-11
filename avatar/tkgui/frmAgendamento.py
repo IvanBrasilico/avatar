@@ -92,4 +92,5 @@ class AgendamentoForm():
     def detecta(self):
         mascara = detecta_mascara(self.fonte.caminho)
         print(mascara)
+        self.edtMascara.delete(0, len(self.edtMascara.get()))
         self.edtMascara.insert(0, mascara)
