@@ -75,7 +75,7 @@ def despacha(filename, url=API_URL, sync=SYNC):
     files = {'file': bson}
     # login()
     print('Enviando BSON %s para %s' % (filename, url))
-    rv = requests.post(url, files=files, data={'sync': sync})
+    rv = requests.post(url, files=files, data={'sync': sync}, verify=False)
     if rv is None:
         return False, None
     try:
