@@ -32,7 +32,7 @@ setup(
             'flake8-quotes',
             'flake8-todo',
             'isort',
-            'pycodestyle==2.3.0',
+            'pycodestyle',
             'pyinstaller',
             'pylint',
             'pytest',

@@ -180,7 +180,6 @@ def carregaarquivos(agendamento: Agendamento, session):
                         tree = ET.parse(os.path.join(dirpath, f))
                         root = tree.getroot()
                     except ParseError as err:
-                        erro = True
                         mensagem = \
                             mensagem + os.path.join(dirpath, f) + \
                             ' XML inválido. ' + str(err) + '\n'
@@ -249,7 +248,8 @@ def carregaarquivos(agendamento: Agendamento, session):
                         c = ConteinerEscaneado(numero, fonteimagem)
                         name = os.path.basename(destino)
                         c.origem = origem
-                        c.arqimagemoriginal = os.path.join(origem, name)
+                        c.arqimagemoriginal = os.path.join(destparcial, name)
+                        # c.arqimagemoriginal = os.path.join(origem, name)
                         mdate = datetime.fromtimestamp(time.mktime(
                             time.localtime(os.path.getmtime(origem))))
                         cdate = datetime.fromtimestamp(time.mktime(
@@ -277,7 +277,6 @@ def carregaarquivos(agendamento: Agendamento, session):
                             session.add(c)
                             session.commit()
                         except IntegrityError as err:
-                            erro = True
                             mensagem = mensagem + \
                                        f'{err}!! {numero} já cadastrado?!\n'
     except Exception as err:
