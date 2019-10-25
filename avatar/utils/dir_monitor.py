@@ -107,7 +107,10 @@ def despacha_dir(dir=BSON_DIR, url=API_URL, sync=SYNC):
     cont = 0
     if not os.path.exists(dir):
         return dir, ['Diretório não encontrado'], []
-    for filename in os.listdir(dir)[:90]:
+    lista_arquivos = os.listdir(dir)
+    if len(lista_arquivos) == 0:
+        return dir, ['Diretório vazio'], []
+    for filename in lista_arquivos:
         try:
             bsonfile = os.path.join(dir, filename)
             success, response = despacha(bsonfile,
