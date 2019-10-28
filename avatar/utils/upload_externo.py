@@ -1,12 +1,20 @@
+import glob
+import os
+import time
+from datetime import datetime
 
-
-def pega_xml(caminho):
-    arquivos = os.listdir(caminho)
-    xmls = [arquivo for arquivo in arquivos if arquivo[-4:] == '.xml']
-    return xmls
+from avatar.utils.utils import lista_jpgs
+from avatar.utils.bsonimage import BsonImage, BsonImageList
 
 
 def monta_lista(pasta):
+    """Retorna dicionario com diretorios dentro do caminho e arquivos dentro.
+
+    Nome dos diretórios dentro da pasta é esperado estar no formato:
+        "número do contêiner - ocorrência"  (ou, no mínimo, número do contêiner)
+        Ex: DFSU2945397 - bagagem com contrafeito
+
+    """
     lista_diretorios = os.listdir(pasta)
     aprocessar = {}
     for diretorio in lista_diretorios:
@@ -14,36 +22,27 @@ def monta_lista(pasta):
         ocorrencia = ''
         try:
             numero = infos[0].strip()
-            ocorrencia = infos[1].strip()
+            if len(infos) > 0:
+                ocorrencia = infos[1].strip()
             caminho_atual = os.path.join(pasta, diretorio)
-            xmls = pega_xml(caminho_atual)
-            if len(xmls) > 0:
-                caminho_completo_xml = os.path.join(pasta, diretorio, xmls[0])
-                filename_jpg = pega_jpg(caminho_atual, xmls[0])
-                caminho_completo_jpeg = os.path.join(pasta, diretorio, filename_jpg)
+            lista_xmls = glob.glob(caminho_atual, '.xml')
+            if len(lista_xmls) > 0:
+                caminho_completo_xml = os.path.join(pasta, diretorio, lista_xmls[0])
+                lista_imagens = lista_jpgs(caminho_atual)
+                caminho_completo_jpeg = os.path.join(pasta, diretorio, lista_imagens[0])
                 data_jpg = datetime.fromtimestamp(
                     time.mktime(time.localtime(os.path.getmtime(caminho_completo_jpeg)))
                 )
-                aprocessar[numero] = (caminho_completo_xml, xmls[0],
+                aprocessar[numero] = (caminho_completo_xml, lista_xmls[0],
                                       caminho_completo_jpeg,
-                                      filename_jpg, data_jpg, ocorrencia)
+                                      lista_imagens[0], data_jpg, ocorrencia)
         except Exception as err:
             print(err, diretorio)
     return aprocessar
 
 
-
-def pega_jpg(caminho, xml):
-    arquivos = os.listdir(caminho)
-    mesmo_nome = [arquivo for arquivo in arquivos if arquivo[-4:] == '.jpg' and arquivo[:-6].find(xml[-4:])]
-    menor_nome_jpg = mesmo_nome[0]
-    for nome in mesmo_nome[1:]:
-        if len(nome) < len(menor_nome_jpg):
-            menor_nome_jpg = nome
-    return menor_nome_jpg
-
-
-def grava_bson_image_list(aprocessar, tag):
+def gera_bson_image_list(caminho, tag):
+    aprocessar = monta_lista(caminho)
     bson_image_list = BsonImageList()
     for container, linha in aprocessar.items():
         xmlpath = linha[0]
@@ -52,7 +51,6 @@ def grava_bson_image_list(aprocessar, tag):
         filename_jpg = linha[3]
         mdate = linha[4]
         ocorrencia = linha[5]
-
         metadata_jpg = \
             {'contentType': 'image/jpeg',
              'UNIDADE': 'ALFSTS',
@@ -75,5 +73,4 @@ def grava_bson_image_list(aprocessar, tag):
              'numeroinformado': container
              }
         bson_image_list.addImage(xmlpath, **metadata_xml)
-
     return bson_image_list

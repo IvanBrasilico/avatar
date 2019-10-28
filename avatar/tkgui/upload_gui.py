@@ -1,4 +1,5 @@
 """Interface gráfica para UPLOAD de images e bsons."""
+import os
 import sys
 import tkinter as tk
 from tkinter import ttk
@@ -8,6 +9,7 @@ print(sys.path)
 
 from avatar.utils.conf import BSON_DIR, VIRASANA_URL
 from avatar.utils.dir_monitor import despacha_dir
+from avatar.utils.upload_externo import gera_bson_image_list
 
 IMAGES_DIR = ''
 
@@ -74,7 +76,11 @@ class Application():
 
     def upload_imagens(self):
         dir = self.edtImagesdir.get()
-        
+        tag = self.edtTag.get()
+        bson_exportacao = gera_bson_image_list(dir, tag)
+        bson_file_name = os.path.join(os.path.dirname(__file__), dir + '_list.bson')
+        bson_exportacao.tofile(bson_file_name)
+
 
 if __name__ == '__main__':
     app = Application()

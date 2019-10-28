@@ -44,22 +44,8 @@ def get_numero_data(root):
     return numero, data
 
 
-def get_lista_jpgs(destcompleto, dirpath, mensagem):
-    """Função auxiliar de carrega_arquivos. Encontra os jpgs alvo.
-
-    Aqui é necessário programar as diversas lógicas utilizadas de
-    nomeacao de arquivos pelos escâneres/recintos.
-
-    No início TODOS os Recintos disponibilizavam um "*stamp.jpg"
-    Depois, foram encontradas outras padronizações
-    Pode ser necessário no futuro exigir uma padronização, senão as
-    possibilidades crescerão tornando o código demasiado complicado.
-    No mínimo, será necessário processar um DE_PARA prévio e
-    parametrizável por arquivos de configuração ou campos no
-    Banco de Dados.
-    """
-    # Procura pelos sufixos conhecidos, as miniaturas, para saber o arquivo
-    # correto a copiar
+def lista_jpgs(dirpath, mensagem=''):
+    # Procura pelos sufixos conhecidos
     for extensao in EXTENSOES_JPG:
         lista_jpg = glob.glob(os.path.join(dirpath, extensao))
         if len(lista_jpg) > 0:
@@ -79,6 +65,24 @@ def get_lista_jpgs(destcompleto, dirpath, mensagem):
             origem_comparar = origem[:len(jpg_semextensao)]
             if origem_comparar == jpg_semextensao:
                 lista_jpg[ind] = jpg
+    return lista_jpg
+
+
+def get_lista_jpgs(destcompleto, dirpath, mensagem=''):
+    """Função auxiliar de carrega_arquivos. Encontra os jpgs alvo.
+
+    Aqui é necessário programar as diversas lógicas utilizadas de
+    nomeacao de arquivos pelos escâneres/recintos.
+
+    No início TODOS os Recintos disponibilizavam um "*stamp.jpg"
+    Depois, foram encontradas outras padronizações
+    Pode ser necessário no futuro exigir uma padronização, senão as
+    possibilidades crescerão tornando o código demasiado complicado.
+    No mínimo, será necessário processar um DE_PARA prévio e
+    parametrizável por arquivos de configuração ou campos no
+    Banco de Dados.
+    """
+    lista_jpg = lista_jpgs(dirpath, mensagem)
     try:
         os.makedirs(destcompleto)
     except FileExistsError:
@@ -96,7 +100,6 @@ def get_lista_jpgs(destcompleto, dirpath, mensagem):
             continue
         lista_jpg_origem.append(origem)
         lista_jpg_destino.append(destino)
-
     return lista_jpg_origem, lista_jpg_destino, mensagem
 
 
