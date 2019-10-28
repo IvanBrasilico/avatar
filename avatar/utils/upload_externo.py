@@ -25,7 +25,7 @@ def monta_lista(pasta):
             if len(infos) > 0:
                 ocorrencia = infos[1].strip()
             caminho_atual = os.path.join(pasta, diretorio)
-            lista_xmls = glob.glob(caminho_atual, '.xml')
+            lista_xmls = glob.glob(os.path.join(caminho_atual, '.xml'))
             if len(lista_xmls) > 0:
                 caminho_completo_xml = os.path.join(pasta, diretorio, lista_xmls[0])
                 lista_imagens = lista_jpgs(caminho_atual)
