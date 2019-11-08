@@ -54,7 +54,7 @@ def lista_jpgs(dirpath, mensagem=''):
         mensagem = mensagem + dirpath + \
                    ' Imagens %s não' % EXTENSOES_JPG + \
                    ' encontradas no caminho.\n'
-        logger.debug('**** destcompleto %s *** ' % destcompleto)
+        logger.debug('**** Caminho %s sem JPGs encontrados *** ' % dirpath)
         return lista_jpg, [], mensagem
     # Pega arquivos um pouco maiores (com o mesmo radical no nome)
     # porque as miniaturas fornecidas possuem resolução baixa
