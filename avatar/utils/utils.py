@@ -175,7 +175,7 @@ def carregaarquivos(agendamento: Agendamento, session):
         for result in glob.iglob(path_origem):
             for dirpath, dirnames, files in os.walk(result):
                 for f in fnmatch.filter(files, '*.xml'):
-                    if 'ocr.xml' in f:
+                    if 'ocr.xml' in f.lower() or 'atr.xml' in f.lower():
                         continue
                     logger.debug(f'carregaarquivos - f = {f}')
                     logger.debug(f'carregaarquivos - dir path = {dirpath}')
