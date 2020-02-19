@@ -172,8 +172,11 @@ def carregaarquivos(agendamento: Agendamento, session):
             mensagem = mensagem + path_origem + \
                        ' retornou lista vazia!! Sem acesso? \n'
             return mensagem, True
+        MAX_DEPTH = 2
         for result in glob.iglob(path_origem):
             for dirpath, dirnames, files in os.walk(result):
+                if dirpath.count(os.sep) - result.count(os.sep) == MAX_DEPTH - 1:
+                    del dirnames[:]
                 for f in fnmatch.filter(files, '*.xml'):
                     if 'ocr.xml' in f.lower() or 'atr.xml' in f.lower():
                         continue
