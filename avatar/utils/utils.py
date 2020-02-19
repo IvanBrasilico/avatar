@@ -17,17 +17,17 @@ from avatar.utils.conf import BSON_BATCH_SIZE, BSON_DEST_PATH, EXTENSOES_JPG, \
 from avatar.utils.logconf import logger
 
 
-def get_numero_data(root):
+def get_numero_data(root, root_tag):
     numero = None
     data = None
-    for tag in root.iter('attribute'):
+    for tag in root.iter(root_tag + 'attribute'):
         tagname = tag.attrib.get('name')
         if tagname and tagname in TAGS_NUMERO:
             numero = tag.text
             logger.debug('get_numero_data - attribute %s - %s' %
                          (str(tagname), str(numero)))
     for atag in TAGS_NUMERO:
-        for tag in root.iter(atag):
+        for tag in root.iter(root_tag + atag):
             logger.debug(tag)
             lnumero = tag.text
             if lnumero is not None:
@@ -35,7 +35,7 @@ def get_numero_data(root):
                 numero = lnumero.replace('?', 'X')
                 break
     for atag in TAGS_DATA:
-        for tag in root.iter(atag):
+        for tag in root.iter(root_tag + atag):
             data = tag.text
             if data is not None:
                 break
@@ -188,7 +188,12 @@ def carregaarquivos(agendamento: Agendamento, session):
                             ' XML inválido. ' + str(err) + '\n'
                         logger.debug(' XML inválido. ' + str(err))
                         continue
-                    numero, data = get_numero_data(root)
+
+                    root_tag = ""
+                    if root.tag.find("}") != -1:
+                        root_tag = root.tag.split("}")[0] + "}"
+
+                    numero, data = get_numero_data(root, root_tag)
                     if numero is None or data is None:
                         mensagem = \
                             mensagem + os.path.join(dirpath, f) + \
@@ -213,9 +218,9 @@ def carregaarquivos(agendamento: Agendamento, session):
                     truckid = 'NI'
                     operador = 'NI'
                     alerta = False
-                    for tag in root.iter('TruckId'):
+                    for tag in root.iter(root_tag + 'TruckId'):
                         truckid = tag.text
-                    for tag in root.iter('Login'):
+                    for tag in root.iter(root_tag + 'Login'):
                         operador = tag.text
                     for tag in root:
                         for t in tag.getchildren():
