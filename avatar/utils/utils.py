@@ -65,6 +65,16 @@ def lista_jpgs(dirpath, mensagem=''):
             origem_comparar = origem[:len(jpg_semextensao)]
             if origem_comparar == jpg_semextensao:
                 lista_jpg[ind] = jpg
+    if len(lista_jpg) > 1:
+        lista_jpg = [item for item in lista_jpg if 'photo' not in item]
+    if len(lista_jpg) == 0:
+        min_len = 1000
+        for jpg in all_jpgs:
+            min_len = min(min_len, len(jpg))
+        for jpg in all_jpgs:
+            if len(jpg) == min_len:
+                lista_jpg = [jpg]
+                break
     return lista_jpg
 
 
