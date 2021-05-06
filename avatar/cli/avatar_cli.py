@@ -92,7 +92,7 @@ def copia(ctx, nome, data):
         agendamento = Agendamento('%Y\\%m\\%d', fonte, proximocarregamento)
         print(f'Iniciando cópia de arquivos da Fonte de Imagens {nome}'
               f' a partir de {data}')
-        mensagem, erro = carregaarquivos(agendamento.processamascara(), session)
+        mensagem, erro = carregaarquivos(agendamento, session)
         if erro:
             logger.warning(mensagem)
         else:
