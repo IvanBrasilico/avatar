@@ -34,7 +34,7 @@ BSON_DIR = avatar_conf.get('BSON_DIR', os.path.join('.', 'bson'))
 VIRASANA_URL = avatar_conf.get('VIRASANA_URL', 'https://10.68.64.12/virasana/')
 thumb_size_str = avatar_conf.get('THUMB_SIZE')
 if thumb_size_str is None:
-    THUMB_SIZE = (800, 600)
+    THUMB_SIZE = (3000, 1200)
 else:
     thumb_size_list = thumb_size_str.split(',')
     THUMB_SIZE = (int(thumb_size_list[0]), int(thumb_size_list[1]))

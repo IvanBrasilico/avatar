@@ -114,7 +114,7 @@ def get_lista_jpgs(destcompleto, dirpath, mensagem=''):
 
 
 def copyjpg(origem, destino):
-    pil_image = Image.open(origem)
+    pil_image = Image.open(origem).convert('L')
     #  Mantain ratio
     size = pil_image.size
     new_size = (int(THUMB_SIZE[1] / size[1] * size[0]), THUMB_SIZE[1])
