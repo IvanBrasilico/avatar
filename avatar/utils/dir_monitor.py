@@ -75,6 +75,7 @@ def despacha(filename, url=API_URL, sync=SYNC):
     files = {'file': bson}
     # login()
     print('Enviando BSON %s para %s' % (filename, url))
+    print(sync)
     rv = requests.post(url, files=files, data={'sync': sync}, verify=False)
     if rv is None:
         return False, None
@@ -136,7 +137,7 @@ def despacha_dir(dir=BSON_DIR, url=API_URL, sync=SYNC):
                 print(response.text)
         except Exception as err:
             exceptions.append(err)
-            print(err, exc_info=True)
+            print(err)
     return dir, erros, exceptions
 
 

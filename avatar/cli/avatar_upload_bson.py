@@ -11,7 +11,9 @@ Args:
 
 """
 import click
+import sys
 
+sys.path.append('.')
 from avatar.utils.conf import BSON_DIR, VIRASANA_URL
 from avatar.utils.dir_monitor import despacha_dir
 
@@ -25,6 +27,7 @@ from avatar.utils.dir_monitor import despacha_dir
               help='Fazer consulta de forma síncrona')
 def carrega(dir, url, sync):
     """Script de linha de comando para integração do arquivo XML."""
+    print(sync)
     print(despacha_dir(dir=dir, url=url, sync=sync))
 
 

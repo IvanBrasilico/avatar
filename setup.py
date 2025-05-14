@@ -11,10 +11,10 @@ setup(
     packages=find_packages(),
     install_requires=[
         'click',
-        'celery',
         'pillow',
         'pymongo',
         'requests',
+        'pyinstaller',
         'sqlalchemy'
     ],
     tests_require=['pytest'],
@@ -23,7 +23,6 @@ setup(
     },
     extras_require={
         'dev': [
-            'alembic',
             'autopep8',
             'bandit',
             'coverage',

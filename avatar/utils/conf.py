@@ -8,7 +8,7 @@ HOMEDIR = os.getcwd()
 IMAGES_FOLDER = os.path.join(HOMEDIR, 'images')
 BSON_DEST_PATH = os.path.join(HOMEDIR, 'bson')
 BSON_DIR = os.path.join('.', 'bson')
-VIRASANA_URL = 'https://10.68.64.12/virasana/'
+VIRASANA_URL = 'https://ajna1.rfoc.srf/virasana/'
 
 CONF_FILE = os.path.join(HOMEDIR, 'avatar.conf')
 avatar_conf = {}
@@ -31,7 +31,7 @@ UNIDADE = avatar_conf.get('UNIDADE', 'ALFSTS')
 
 INTERVALO = int(avatar_conf.get('INTERVALO', 30))
 BSON_DIR = avatar_conf.get('BSON_DIR', os.path.join('.', 'bson'))
-VIRASANA_URL = avatar_conf.get('VIRASANA_URL', 'https://10.68.64.12/virasana/')
+VIRASANA_URL = avatar_conf.get('VIRASANA_URL', 'https://10.61.8.28/virasana/')
 thumb_size_str = avatar_conf.get('THUMB_SIZE')
 if thumb_size_str is None:
     THUMB_SIZE = (3000, 1200)

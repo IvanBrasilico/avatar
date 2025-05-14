@@ -56,8 +56,13 @@ def lista_jpgs(dirpath, mensagem=''):
                    ' encontradas no caminho.\n'
         logger.debug('**** Caminho %s sem JPGs encontrados *** ' % dirpath)
         return lista_jpg, [], mensagem
-    # Pega arquivos um pouco maiores (com o mesmo radical no nome)
-    # porque as miniaturas fornecidas possuem resolução baixa
+    # Retorna arquivo escâner novo DPW ignorando a busca abaixo
+    if len(lista_jpg) == 1 and '-xray' in lista_jpg[0]:
+        return lista_jpg
+    # Troca arquivo capturado por outro com mesmo radical
+    # Serve para pegar arquivos um pouco maiores (com o mesmo radical no nome)
+    # porque na maioria dos casos a imagem com o sufixo cadastrado é um thumbnail
+    # e as miniaturas fornecidas (thumbnails) possuem resolução muito baixa
     all_jpgs = glob.glob(os.path.join(dirpath, '*.jpg'))
     for jpg in all_jpgs:
         for ind, origem in enumerate(lista_jpg):
@@ -65,8 +70,10 @@ def lista_jpgs(dirpath, mensagem=''):
             origem_comparar = origem[:len(jpg_semextensao)]
             if origem_comparar == jpg_semextensao:
                 lista_jpg[ind] = jpg
+    # Elimina arquivos com 'photo' no nome
     if len(lista_jpg) > 1:
         lista_jpg = [item for item in lista_jpg if 'photo' not in item]
+    # Se ainda não capturou nenhum arquivo, pega arquivo com nome menor.
     if len(lista_jpg) == 0:
         min_len = 1000
         for jpg in all_jpgs:
