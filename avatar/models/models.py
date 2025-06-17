@@ -31,7 +31,7 @@ class MySession():
             print('***Banco de Dados...', path)
             if os.name != 'nt':
                 path = '/' + path
-        self._engine = create_engine('sqlite:///' + path, convert_unicode=True)
+        self._engine = create_engine('sqlite:///' + path)
         Session = sessionmaker(bind=self._engine)
         if arquivo is None:
             self._session = Session()
