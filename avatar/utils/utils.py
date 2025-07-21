@@ -39,6 +39,11 @@ def get_numero_data(root, root_tag):
             data = tag.text
             if data is not None:
                 break
+    # inserir código que lê corretamente o código xml localfrio
+    if numero is None:
+        numero = get_localfrio_202506_tag_numero()
+    if data is None:
+        data = get_localfrio_202506_tag_data()
     if numero:
         numero = numero.strip()
     return numero, data
@@ -125,7 +130,7 @@ def copyjpg(origem, destino):
     #  Mantain ratio
     size = pil_image.size
     new_size = (int(THUMB_SIZE[1] / size[1] * size[0]), THUMB_SIZE[1])
-    pil_image.thumbnail(new_size, Image.ANTIALIAS)
+    pil_image.thumbnail(new_size, Image.LANCZOS)
     pil_image.save(destino)
 
 
@@ -243,7 +248,7 @@ def carregaarquivos(agendamento: Agendamento, session):
                     for tag in root.iter(root_tag + 'Login'):
                         operador = tag.text
                     for tag in root:
-                        for t in tag.getchildren():
+                        for t in tag:
                             if t.text == 'AL':
                                 alerta = True
                     ano = data[:4]
