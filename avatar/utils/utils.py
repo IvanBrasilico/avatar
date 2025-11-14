@@ -18,8 +18,6 @@ from avatar.utils.le_xmlv2 import extract_from_any_xml
 from avatar.utils.logconf import logger
 
 
-
-
 def get_numero_data(root, root_tag):
     numero = None
     data = None
@@ -42,6 +40,11 @@ def get_numero_data(root, root_tag):
             data = tag.text
             if data is not None:
                 break
+    # inserir código que lê corretamente o código xml localfrio
+    if numero is None:
+        numero = get_localfrio_202506_tag_numero()
+    if data is None:
+        data = get_localfrio_202506_tag_data()
     if numero:
         numero = numero.strip()
     return numero, data
@@ -128,7 +131,7 @@ def copyjpg(origem, destino):
     #  Mantain ratio
     size = pil_image.size
     new_size = (int(THUMB_SIZE[1] / size[1] * size[0]), THUMB_SIZE[1])
-    pil_image.thumbnail(new_size, Image.ANTIALIAS)
+    pil_image.thumbnail(new_size, Image.LANCZOS)
     pil_image.save(destino)
 
 
