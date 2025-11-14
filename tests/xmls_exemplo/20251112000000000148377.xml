@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <accession>20251112000000000148377</accession>
+  <system>P60_NOVO</system>
+  <createdate>2025-11-12T16:18:57Z</createdate>
+  <exportdate>2025-11-12T16:18:57Z</exportdate>
+  <xraydone>-1</xraydone>
+  <inspectdone>-1</inspectdone>
+  <inspectionsuspicious>0</inspectionsuspicious>
+  <searchdone>0</searchdone>
+  <searchfound>0</searchfound>
+  <attributes>
+    <attribute name="Container2" />
+    <attribute name="Comments">IJ</attribute>
+    <attribute name="Container1">HASU5096871</attribute>
+    <attribute name="ANPR" />
+    <attribute name="NavisResp" />
+  </attributes>
+  <files>
+    <file type="XRAYJPEG">XRAY-20251112000000000148377-001--Array-0000-xray.jpg</file>
+    <file type="SNAPSHOT">XRAY-20251112000000000148377-002.jpg</file>
+    <file type="SNAPSHOT">XRAY-20251112000000000148377-003.jpg</file>
+    <file type="SNAPSHOT">XRAY-20251112000000000148377-004.jpg</file>
+    <file type="SNAPSHOT">XRAY-20251112000000000148377-005.jpg</file>
+    <file type="SNAPSHOT">XRAY-20251112000000000148377-006.jpg</file>
+    <file type="SNAPSHOT">XRAY-20251112000000000148377-007.jpg</file>
+    <file type="SNAPSHOT">XRAY-20251112000000000148377-008.jpg</file>
+    <file type="XRAY">XRAY-20251112000000000148377-009--Array-0000.img</file>
+  </files>
+</manifest>

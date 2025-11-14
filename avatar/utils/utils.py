@@ -14,7 +14,10 @@ from avatar.models.models import Agendamento, ConteinerEscaneado
 from avatar.utils.bsonimage import BsonImage, BsonImageList
 from avatar.utils.conf import BSON_BATCH_SIZE, BSON_DEST_PATH, EXTENSOES_JPG, \
     IMAGES_FOLDER, TAGS_DATA, TAGS_NUMERO, THUMB_SIZE, UNIDADE
+from avatar.utils.le_xmlv2 import extract_from_any_xml
 from avatar.utils.logconf import logger
+
+
 
 
 def get_numero_data(root, root_tag):
@@ -200,20 +203,13 @@ def carregaarquivos(agendamento: Agendamento, session):
                     logger.debug(f'carregaarquivos - f = {f}')
                     logger.debug(f'carregaarquivos - dir path = {dirpath}')
                     try:
-                        tree = ET.parse(os.path.join(dirpath, f))
-                        root = tree.getroot()
+                        numero, data, truckid, operador, alerta = extract_from_any_xml(os.path.join(dirpath, f))
                     except ParseError as err:
                         mensagem = \
                             mensagem + os.path.join(dirpath, f) + \
                             ' XML inválido. ' + str(err) + '\n'
                         logger.debug(' XML inválido. ' + str(err))
                         continue
-
-                    root_tag = ""
-                    if root.tag.find("}") != -1:
-                        root_tag = root.tag.split("}")[0] + "}"
-
-                    numero, data = get_numero_data(root, root_tag)
                     if numero is None or data is None:
                         mensagem = \
                             mensagem + os.path.join(dirpath, f) + \
@@ -235,17 +231,6 @@ def carregaarquivos(agendamento: Agendamento, session):
                             numero = numero_novo
                             logger.info(f'{numero} recuperado do diretório')
 
-                    truckid = 'NI'
-                    operador = 'NI'
-                    alerta = False
-                    for tag in root.iter(root_tag + 'TruckId'):
-                        truckid = tag.text
-                    for tag in root.iter(root_tag + 'Login'):
-                        operador = tag.text
-                    for tag in root:
-                        for t in tag.getchildren():
-                            if t.text == 'AL':
-                                alerta = True
                     ano = data[:4]
                     mes = data[5:7]
                     dia = data[8:10]
