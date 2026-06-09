@@ -167,7 +167,8 @@ def carregaarquivos(agendamento: Agendamento, session):
     """
     caminho = agendamento.processamascara()
     fonteimagem = agendamento.fonte
-    logger.debug(fonteimagem.caminho, caminho)
+    logger.debug(f'{fonteimagem.caminho}: fonteimagem.caminho')
+    logger.debug(f'{caminho}: caminho')
     path_origem = os.path.join(fonteimagem.caminho, caminho)
     path_destino = os.path.join(IMAGES_FOLDER, fonteimagem.nome)
     logger.debug(f'Origem: {path_origem}')

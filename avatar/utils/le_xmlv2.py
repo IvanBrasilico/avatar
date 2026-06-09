@@ -55,7 +55,7 @@ def le_xml_legado(xml_content):
     for tag in root.iter(root_tag + 'Login'):
         operador = tag.text
     for tag in root:
-        for t in tag.getchildren():
+        for t in tag:
             if t.text == 'AL':
                 alerta = True
     return numero, data, truckid, operador, alerta
@@ -161,39 +161,32 @@ def extract_from_any_xml(path):
         xml_content = f.read()
     root = ET.fromstring(xml_content)
     if root.tag == 'manifest':
+        logger.debug('----- manifest -----')
         manifest_data = extract_manifest_data(xml_content)
-        print(manifest_data)
+        logger.debug(manifest_data)
         numero = manifest_data.get('Container1')
         data = manifest_data.get('createdate')
         truckid = manifest_data.get('acession')
         operador = manifest_data.get('')
-        alerta = manifest_data.get('')
+        # A priori, esta informação de alerta não é utilizada, pois é extraída depois do XML no
+        # virasana_periodic
+        alerta = False
     elif root.tag.endswith('DataForm'):
+        logger.debug('----- DataForm -----')
         dataform_data = extract_data_from_xml(xml_content)
-        print(dataform_data)
+        logger.debug(dataform_data)
         numero = dataform_data.get('ContainerIds')[0]
         data = dataform_data.get('Date')
         truckid = dataform_data.get('TruckId')
         operador = dataform_data.get('Logins')[0]
-        alerta = dataform_data.get('')
+        # A priori, esta informação de alerta não é utilizada, pois é extraída depois do XML no
+        # virasana_periodic
+        alerta = False
     else:
+        logger.debug('----- le_xml_legado -----')
         numero, data, truckid, operador, alerta = le_xml_legado(xml_content)
 
     return numero, data, truckid, operador, alerta
 
 
-if __name__ == '__main__':
 
-    # Diretório com arquivos XML
-    directory = 'tests/xmls_exemplo/'
-
-    # Lista de nomes de arquivos XML (adaptar conforme seus arquivos)
-    file_names = os.listdir(directory)
-
-    # Processar todos os arquivos e comparar conteúdo extraído
-    for fname in file_names:
-        path = os.path.join(directory, fname)
-        extracted = extract_from_any_xml(path)
-        print(f'Arquivo: {fname}')
-        print('Dados extraídos:', extracted)
-        print('-' * 60)
